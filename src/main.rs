@@ -155,6 +155,25 @@ async fn edit_protest(
     }
 }
 
+async fn delete_protest(
+    State(state): State<AppState>,
+    Path(protest_id): Path<i32>,
+) -> impl IntoResponse {
+    let result = sqlx::query("DELETE FROM protests WHERE id = $1")
+        .bind(protest_id)
+        .execute(&state.db)
+        .await;
+
+    match result {
+        Ok(_) => Redirect::to("/protests").into_response(),
+        Err(err) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to delete protest: {}", err),
+        )
+            .into_response(),
+    }
+}
+
 #[derive(Clone)]
 struct AppState {
     db: PgPool
@@ -191,13 +210,15 @@ async fn main() {
     let app = Router::new()
         .route(
             "/",
-            get(|| async { Html("<h1>Welcome to the Protest App</h1>") }),
+            // get(|| async { Html("<h1>Welcome to the Protest App</h1>") }),
+            get(list_protests)
         )
         .route(
             "/protests",
             get(list_protests))
         .route("/protests/add", get(add_protest_form).post(add_protest))
         .route("/protests/:id/edit", get(edit_protest_form).post(edit_protest))
+        .route("/protests/:id/delete", get(delete_protest))
         .with_state(state);
 
     // Start the server

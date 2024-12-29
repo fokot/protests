@@ -36,9 +36,12 @@
     <label for="place">place:</label>
     <input type="text" id="place" name="place" value="{{ protest.place }}" required><br>
 
-
-
     <button type="submit">Save</button>
+
+    <a href="/protests/{{ protest.id }}/delete">
+        <button type="button">Delete Protest</button>
+    </a>
+
 </form>
 </body>
 </html>
