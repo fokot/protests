@@ -4,7 +4,7 @@
     <title>Edit Protest</title>
 </head>
 <body>
-<h1>Edit Protest</h1>
+<h1>Edit Protest {{ m("aaa") }}</h1>
 <form action="/protests/{{ protest.id }}/edit" method="post">
 
     <input type="hidden" name="id" value="{{ protest.id }}">

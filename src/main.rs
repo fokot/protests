@@ -1,11 +1,15 @@
+mod localizer;
+
+use tokio::sync::Mutex;
+use std::sync::Arc;
 use askama::Template;
 use axum::{response::Html, routing::get, Form, Router};
 use serde::Deserialize;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Redirect};
+use fluent::FluentArgs;
 use sqlx::{FromRow, PgPool};
-use tokio_postgres::{Client, NoTls};
 use sqlx::postgres::PgPoolOptions;
 
 // Define a Protest structure for deserialization
@@ -54,8 +58,10 @@ async fn add_protest_form() -> impl IntoResponse {
 #[derive(Template)]
 #[template(path = "protest_edit.html")]
 pub struct ProtestEditTemplate {
-    protest: Protest
+    protest: Protest,
+    m: Box<dyn Fn(&str, Option<&FluentArgs>) -> String>
 }
+
 async fn edit_protest_form(
     State(state): State<AppState>,
     Path(protest_id): Path<i32>,
@@ -70,7 +76,14 @@ async fn edit_protest_form(
 
     match protest {
         Ok(protest) => {
-            let template = ProtestEditTemplate { protest };
+            let translate = Box::new(|key: &str, fluent_args: Option<&FluentArgs>| -> String {
+                match key {
+                    "welcome" => "Welcome!".to_string(),
+                    "hello" => "Hello!".to_string(),
+                    _ => format!("Unknown key: {}", key),
+                }
+            });
+            let template = ProtestEditTemplate { protest, m: translate };
             Html(template.render().unwrap()).into_response()
         }
         Err(_) => (
@@ -115,7 +128,6 @@ async fn add_protest(
 
 async fn edit_protest(
     State(state): State<AppState>,
-    Path(protest_id): Path<i32>,
     Form(protest): Form<Protest>,
 ) -> impl IntoResponse {
     // Update the protest in the database
@@ -176,8 +188,16 @@ async fn delete_protest(
 
 #[derive(Clone)]
 struct AppState {
-    db: PgPool
+    db: PgPool,
+    localizer: Arc<Mutex<localizer::Localizer>>
 }
+
+// impl AppState {
+//     fn translate(&self, lang: &str, key: &str, args: Option<&fluent::FluentArgs>) -> String {
+//         self.localizer.translate(lang, key, args)
+//     }
+// }
+
 
 // Main function
 #[tokio::main]
@@ -187,7 +207,9 @@ async fn main() {
         .max_connections(5)
         .connect("postgres://postgres:postgres@localhost:5433/protests").await.unwrap();
 
-    let state = AppState { db: pool.clone() };
+    let localizer = Arc::new(Mutex::new(localizer::Localizer::new()));
+
+    let state = AppState { db: pool.clone(), localizer };
 
     // Initialize database
     sqlx::query(
