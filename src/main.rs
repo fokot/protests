@@ -217,8 +217,8 @@ async fn main() {
             "/protests",
             get(list_protests))
         .route("/protests/add", get(add_protest_form).post(add_protest))
-        .route("/protests/:id/edit", get(edit_protest_form).post(edit_protest))
-        .route("/protests/:id/delete", get(delete_protest))
+        .route("/protests/{id}/edit", get(edit_protest_form).post(edit_protest))
+        .route("/protests/{id}/delete", get(delete_protest))
         .with_state(state);
 
     // Start the server
