@@ -5,6 +5,7 @@ use axum::{response::Html, routing::get, Form, Router};
 use serde::Deserialize;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
+use axum_extra::extract::cookie::CookieJar;
 use axum::response::{IntoResponse, Redirect};
 use sqlx::{FromRow, PgPool};
 use sqlx::postgres::PgPoolOptions;
@@ -36,32 +37,39 @@ static LOCALIZER: Lazy<Localizer> = Lazy::new(|| {
 #[template(path = "protests.html")]
 struct ProtestsTemplate {
     protests: Vec<Protest>,
-    m: Box<dyn Fn(&str) -> String>
+    m: Box<dyn Fn(&str) -> String>,
+    lang: String
 }
 
-// Handler to show all protests
-async fn list_protests(State(state): State<AppState>) -> Html<String> {
+async fn list_protests(
+    State(state): State<AppState>,
+    cookies: CookieJar
+) -> Html<String> {
+    let lang = cookies.get("language").map(|c| c.value().to_string()).unwrap_or("sk".to_string());
+    let l = lang.clone();
+    let m = Box::new(move |key: &str| LOCALIZER.translate(lang.as_str(), key, None) );
+
     let protests = sqlx::query_as::<_, Protest>(
         "SELECT id, name, description, labels, town, region, country, date, time, place FROM protests ORDER BY id"
-        )
-        // .fetch_all(&mut state.db.clone()).await.unwrap();
-        .fetch_all(&state.db).await.unwrap();
+    )
+    .fetch_all(&state.db).await.unwrap();
 
-    let m = Box::new(|key: &str| LOCALIZER.translate("sk", key, None) );
-
-    let template = ProtestsTemplate { protests, m };
+    let template = ProtestsTemplate { protests, m, lang: l };
     Html(template.render().unwrap())
 }
 
 #[derive(Template)]
 #[template(path = "protest_add.html")]
 pub struct ProtestAddTemplate {
-    m: Box<dyn Fn(&str) -> String>
+    m: Box<dyn Fn(&str) -> String>,
+    lang: String
 }
 
-async fn add_protest_form() -> impl IntoResponse {
-    let m = Box::new(|key: &str| LOCALIZER.translate("sk", key, None) );
-    let template = ProtestAddTemplate { m } ;
+async fn add_protest_form(cookies: CookieJar) -> impl IntoResponse {
+    let lang = cookies.get("language").map(|c| c.value().to_string()).unwrap_or("sk".to_string());
+    let l = lang.clone();
+    let m = Box::new(move |key: &str| LOCALIZER.translate(lang.as_str(), key, None) );
+    let template = ProtestAddTemplate { m, lang: l } ;
     Html(template.render().unwrap()).into_response()
 }
 
@@ -69,12 +77,14 @@ async fn add_protest_form() -> impl IntoResponse {
 #[template(path = "protest_edit.html")]
 pub struct ProtestEditTemplate {
     protest: Protest,
-    m: Box<dyn Fn(&str) -> String>
+    m: Box<dyn Fn(&str) -> String>,
+    lang: String
 }
 
 async fn edit_protest_form(
     State(state): State<AppState>,
     Path(protest_id): Path<i32>,
+    cookies: CookieJar,
 ) -> impl IntoResponse {
     // Fetch the protest from the database
     let protest = sqlx::query_as::<_, Protest>(
@@ -86,8 +96,10 @@ async fn edit_protest_form(
 
     match protest {
         Ok(protest) => {
-            let m = Box::new(|key: &str| LOCALIZER.translate("sk", key, None) );
-            let template = ProtestEditTemplate { protest, m };
+            let lang = cookies.get("language").map(|c| c.value().to_string()).unwrap_or("sk".to_string());
+            let l = lang.clone();
+            let m = Box::new(move |key: &str| LOCALIZER.translate(lang.as_str(), key, None) );
+            let template = ProtestEditTemplate { protest, m, lang: l };
             Html(template.render().unwrap()).into_response()
         }
         Err(_) => (

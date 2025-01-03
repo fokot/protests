@@ -4,6 +4,17 @@
     <title>{% block title %}Title{% endblock %}</title>
 </head>
 <body>
+    <select id="language-dropdown">
+        <option value="en" {% if lang == "en" %}selected{% endif %}>English</option>
+        <option value="sk" {% if lang == "sk" %}selected{% endif %}>Slovak</option>
+    </select>
+    <script>
+        document.getElementById('language-dropdown').addEventListener('change', function () {
+            document.cookie = `language=${this.value}; path=/;`;
+            location.reload();
+        });
+    </script>
+
     <div id="header">
         <h1>{% block title %}Title{% endblock %}</h1>
     </div>
