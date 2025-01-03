@@ -1,32 +1,29 @@
-<!doctype html>
-<html>
-    <head>
-        <title>Protests</title>
-    </head>
-    <body>
-        <h1>List of Protests</h1>
-        <a href="/protests/add">
-            <button type="button">{{ m("add_protest") }}</button>
-        </a>
-        <ul>
-            {% for protest in protests %}
-            <li>
-                <h2>
-                    <a href="/protests/{{ protest.id }}/edit">{{ protest.name }}</a>
-                </h2>
-                <p>{{ protest.description }}</p>
-                <p><strong>Labels:</strong> {{ protest.labels }}</p>
-                <p>
-                    <strong>Location:</strong> {{ protest.town }}, {{
-                    protest.region }}, {{ protest.country }}
-                </p>
-                <p>
-                    <strong>Date & Time:</strong> {{ protest.date }} {{
-                    protest.time }}
-                </p>
-                <p><strong>Place:</strong> {{ protest.place }}</p>
-            </li>
-            {% endfor %}
-        </ul>
-    </body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}{{ m("protests") }}{% endblock %}
+
+{% block content %}
+    <a href="/protests/add">
+        <button type="button">{{ m("add_protest") }}</button>
+    </a>
+    <ul>
+        {% for protest in protests %}
+        <li>
+            <h2>
+                <a href="/protests/{{ protest.id }}/edit">{{ protest.name }}</a>
+            </h2>
+            <p>{{ protest.description }}</p>
+            <p><strong>Labels:</strong> {{ protest.labels }}</p>
+            <p>
+                <strong>Location:</strong> {{ protest.town }}, {{
+                protest.region }}, {{ protest.country }}
+            </p>
+            <p>
+                <strong>Date & Time:</strong> {{ protest.date }} {{
+                protest.time }}
+            </p>
+            <p><strong>Place:</strong> {{ protest.place }}</p>
+        </li>
+        {% endfor %}
+    </ul>
+{% endblock %}

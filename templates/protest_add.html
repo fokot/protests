@@ -1,10 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>{{ m("add_protest") }}</title>
-</head>
-<body>
-<h1>{{ m("add_protest") }}</h1>
+{% extends "base.html" %}
+
+{% block title %}{{ m("add_protest") }}{% endblock %}
+
+{% block content %}
 <form action="/protests/add" method="post">
 
     <input type="hidden" name="id" value="-1">
@@ -38,5 +36,4 @@
 
     <button type="submit">{{ m("add_protest") }}</button>
 </form>
-</body>
-</html>
+{% endblock %}

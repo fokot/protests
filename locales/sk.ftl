@@ -8,6 +8,7 @@ date = Dátum
 time = Čas
 place = Miesto
 
+protests = Protesty
 add_protest = Vytvor protest
 edit_protest = Uprav protest
 

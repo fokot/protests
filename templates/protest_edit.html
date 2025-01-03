@@ -1,10 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>{{ m("edit_protest") }}</title>
-</head>
-<body>
-<h1>{{ m("edit_protest") }}</h1>
+{% extends "base.html" %}
+
+{% block title %}{{ m("edit_protest") }}{% endblock %}
+
+{% block content %}
 <form action="/protests/{{ protest.id }}/edit" method="post">
 
     <input type="hidden" name="id" value="{{ protest.id }}">
@@ -41,7 +39,5 @@
     <a href="/protests/{{ protest.id }}/delete">
         <button type="button">{{ m("delete") }}</button>
     </a>
-
 </form>
-</body>
-</html>
+{% endblock %}

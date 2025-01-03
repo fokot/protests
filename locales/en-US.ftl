@@ -8,6 +8,7 @@ date = Date
 time = Time
 place = Place
 
+protests = Protests
 add_protest = Add protest
 edit_protest = Edit protest
 
