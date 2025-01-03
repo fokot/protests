@@ -2,7 +2,6 @@ use fluent::{bundle::FluentBundle, FluentResource};
 use unic_langid::LanguageIdentifier;
 use std::collections::HashMap;
 use std::fs;
-use once_cell::sync::Lazy;
 
 pub struct Localizer {
     bundles: HashMap<String, FluentBundle<FluentResource, intl_memoizer::IntlLangMemoizer>>,
@@ -15,21 +14,19 @@ impl Localizer {
     pub fn new() -> Self {
         let mut bundles = HashMap::new();
 
-        // Load English translations
-        let en_lang: LanguageIdentifier = "en-US".parse().unwrap();
-        let en_ftl = fs::read_to_string("locales/en-US.ftl").unwrap();
-        let en_resource = FluentResource::try_new(en_ftl).unwrap();
-        let mut en_bundle = FluentBundle::new(vec![en_lang]);
-        en_bundle.add_resource(en_resource).unwrap();
-        bundles.insert("en-US".to_string(), en_bundle);
-
-        // // Load Spanish translations
-        // let es_lang: LanguageIdentifier = "es-ES".parse().unwrap();
-        // let es_ftl = fs::read_to_string("locales/es-ES.ftl").unwrap();
-        // let es_resource = FluentResource::try_new(es_ftl).unwrap();
-        // let mut es_bundle = FluentBundle::new(vec![es_lang]);
-        // es_bundle.add_resource(es_resource).unwrap();
-        // bundles.insert("es-ES".to_string(), es_bundle);
+        // read all files in locales directory
+        for path in fs::read_dir("locales").unwrap() {
+            let path = path.unwrap().path();
+            if path.is_file() && path.to_str().unwrap().ends_with(".ftl") {
+                let fileStem = path.file_stem().unwrap().to_str().unwrap();
+                let lang: LanguageIdentifier = fileStem.parse().unwrap();
+                let ftl = fs::read_to_string(path).unwrap();
+                let resource = FluentResource::try_new(ftl).unwrap();
+                let mut bundle = FluentBundle::new(vec![lang.clone()]);
+                bundle.add_resource(resource).unwrap();
+                bundles.insert(lang.to_string(), bundle);
+            }
+        }
 
         Localizer { bundles }
     }
@@ -37,12 +34,12 @@ impl Localizer {
     pub fn translate(&self, lang: &str, key: &str, args: Option<&fluent::FluentArgs>) -> String {
         if let Some(bundle) = self.bundles.get(lang) {
             println!("Translating {} to {}...", key, lang);
-            let msg = bundle.get_message(key).unwrap();
+            let msg = bundle.get_message(key).expect(&format!("Message '{}' in language '{}' not found", key, lang));
             let pattern = msg.value().unwrap();
             let mut errors = vec![];
             bundle.format_pattern(pattern, args, &mut errors).to_string()
         } else {
-            "Translation not found".to_string()
+            format!("Translations for language '{}' not found", lang).to_string()
         }
     }
 }

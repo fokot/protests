@@ -1,43 +1,42 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Add Protest</title>
+    <title>{{ m("add_protest") }}</title>
 </head>
 <body>
-<h1>Add New Protest</h1>
+<h1>{{ m("add_protest") }}</h1>
 <form action="/protests/add" method="post">
 
     <input type="hidden" name="id" value="-1">
 
-    <label for="name">Name:</label>
+    <label for="name">{{ m("name") }}:</label>
     <input type="text" id="name" name="name" required><br>
 
-    <label for="description">Description:</label>
+    <label for="description">{{ m("description") }}:</label>
     <textarea id="description" name="description" required></textarea><br>
 
-    <label for="labels">labels:</label>
+    <label for="labels">{{ m("labels") }}:</label>
     <input type="text" id="labels" name="labels" required><br>
 
-    <label for="town">town:</label>
+    <label for="town">{{ m("town") }}:</label>
     <input type="text" id="town" name="town" required><br>
 
-    <label for="region">region:</label>
+    <label for="region">{{ m("region") }}:</label>
     <input type="text" id="region" name="region" required><br>
 
-    <label for="country">country:</label>
+    <label for="country">{{ m("country") }}:</label>
     <input type="text" id="country" name="country" required><br>
 
-    <label for="date">date:</label>
+    <label for="date">{{ m("date") }}:</label>
     <input type="text" id="date" name="date" required><br>
 
-    <label for="time">time:</label>
+    <label for="time">{{ m("time") }}:</label>
     <input type="text" id="time" name="time" required><br>
 
-
-    <label for="place">place:</label>
+    <label for="place">{{ m("place") }}:</label>
     <input type="text" id="place" name="place" required><br>
 
-    <button type="submit">Add Protest</button>
+    <button type="submit">{{ m("add_protest") }}</button>
 </form>
 </body>
 </html>

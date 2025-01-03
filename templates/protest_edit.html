@@ -1,45 +1,45 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Edit Protest</title>
+    <title>{{ m("edit_protest") }}</title>
 </head>
 <body>
-<h1>Edit Protest {{ self::m("welcome") }}</h1>
+<h1>{{ m("edit_protest") }}</h1>
 <form action="/protests/{{ protest.id }}/edit" method="post">
 
     <input type="hidden" name="id" value="{{ protest.id }}">
 
-    <label for="name">Name:</label>
+    <label for="name">{{ m("name") }}:</label>
     <input type="text" id="name" name="name" value="{{ protest.name }}" required><br>
 
-    <label for="description">Description:</label>
+    <label for="description">{{ m("description") }}:</label>
     <textarea id="description" name="description" required>{{ protest.description }}</textarea><br>
 
-    <label for="labels">labels:</label>
+    <label for="labels">{{ m("labels") }}:</label>
     <input type="text" id="labels" name="labels" value="{{ protest.labels }}" required><br>
 
-    <label for="town">town:</label>
+    <label for="town">{{ m("town") }}:</label>
     <input type="text" id="town" name="town" value="{{ protest.town }}" required><br>
 
-    <label for="region">region:</label>
+    <label for="region">{{ m("region") }}:</label>
     <input type="text" id="region" name="region" value="{{ protest.region }}" required><br>
 
-    <label for="country">country:</label>
+    <label for="country">{{ m("country") }}:</label>
     <input type="text" id="country" name="country" value="{{ protest.country }}" required><br>
 
-    <label for="date">date:</label>
+    <label for="date">{{ m("date") }}:</label>
     <input type="text" id="date" name="date" value="{{ protest.date }}" required><br>
 
-    <label for="time">time:</label>
+    <label for="time">{{ m("time") }}:</label>
     <input type="text" id="time" name="time" value="{{ protest.time }}" required><br>
 
-    <label for="place">place:</label>
+    <label for="place">{{ m("place") }}:</label>
     <input type="text" id="place" name="place" value="{{ protest.place }}" required><br>
 
-    <button type="submit">Save</button>
+    <button type="submit">{{ m("save") }}</button>
 
     <a href="/protests/{{ protest.id }}/delete">
-        <button type="button">Delete Protest</button>
+        <button type="button">{{ m("delete") }}</button>
     </a>
 
 </form>

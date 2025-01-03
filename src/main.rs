@@ -1,14 +1,11 @@
 mod localizer;
 
-use tokio::sync::Mutex;
-use std::sync::Arc;
 use askama::Template;
 use axum::{response::Html, routing::get, Form, Router};
 use serde::Deserialize;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Redirect};
-use fluent::FluentArgs;
 use sqlx::{FromRow, PgPool};
 use sqlx::postgres::PgPoolOptions;
 use once_cell::sync::Lazy;
@@ -34,15 +31,12 @@ static LOCALIZER: Lazy<Localizer> = Lazy::new(|| {
     Localizer::new()
 });
 
-fn m(key: &str) -> String {
-    LOCALIZER.translate("en-US", key, None)
-}
-
 // Askama template for the list of protests
 #[derive(Template)]
 #[template(path = "protests.html")]
 struct ProtestsTemplate {
     protests: Vec<Protest>,
+    m: Box<dyn Fn(&str) -> String>
 }
 
 // Handler to show all protests
@@ -53,16 +47,21 @@ async fn list_protests(State(state): State<AppState>) -> Html<String> {
         // .fetch_all(&mut state.db.clone()).await.unwrap();
         .fetch_all(&state.db).await.unwrap();
 
-    let template = ProtestsTemplate { protests };
+    let m = Box::new(|key: &str| LOCALIZER.translate("sk", key, None) );
+
+    let template = ProtestsTemplate { protests, m };
     Html(template.render().unwrap())
 }
 
 #[derive(Template)]
 #[template(path = "protest_add.html")]
-pub struct ProtestAddTemplate;
+pub struct ProtestAddTemplate {
+    m: Box<dyn Fn(&str) -> String>
+}
 
 async fn add_protest_form() -> impl IntoResponse {
-    let template = ProtestAddTemplate;
+    let m = Box::new(|key: &str| LOCALIZER.translate("sk", key, None) );
+    let template = ProtestAddTemplate { m } ;
     Html(template.render().unwrap()).into_response()
 }
 
@@ -70,8 +69,7 @@ async fn add_protest_form() -> impl IntoResponse {
 #[template(path = "protest_edit.html")]
 pub struct ProtestEditTemplate {
     protest: Protest,
-    // m: fn(&str) -> String
-    // m: Box<dyn Fn(&str) -> String>
+    m: Box<dyn Fn(&str) -> String>
 }
 
 async fn edit_protest_form(
@@ -88,22 +86,8 @@ async fn edit_protest_form(
 
     match protest {
         Ok(protest) => {
-            let translate = Box::new(|key: &str, fluent_args: Option<&FluentArgs>| -> String {
-                match key {
-                    "welcome" => "Welcome!".to_string(),
-                    "hello" => "Hello!".to_string(),
-                    _ => format!("Unknown key: {}", key),
-                }
-            });
-
-            let m = Box::new(|key: &str| -> String {
-                match key {
-                    "welcome" => "Welcome!".to_string(),
-                    "hello" => "Hello!".to_string(),
-                    _ => format!("Unknown key: {}", key),
-                }
-            });
-            let template = ProtestEditTemplate { protest };
+            let m = Box::new(|key: &str| LOCALIZER.translate("sk", key, None) );
+            let template = ProtestEditTemplate { protest, m };
             Html(template.render().unwrap()).into_response()
         }
         Err(_) => (
@@ -211,15 +195,6 @@ struct AppState {
     db: PgPool,
 }
 
-// impl AppState {
-//     fn translate(&self, lang: &str, key: &str, args: Option<&fluent::FluentArgs>) -> String {
-//         self.localizer.translate(lang, key, args)
-//     }
-// }
-
-
-
-
 // Main function
 #[tokio::main]
 async fn main() {
@@ -227,8 +202,6 @@ async fn main() {
         PgPoolOptions::new()
         .max_connections(5)
         .connect("postgres://postgres:postgres@localhost:5433/protests").await.unwrap();
-
-
 
     let state = AppState { db: pool.clone() };
 
