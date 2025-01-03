@@ -33,7 +33,6 @@ impl Localizer {
 
     pub fn translate(&self, lang: &str, key: &str, args: Option<&fluent::FluentArgs>) -> String {
         if let Some(bundle) = self.bundles.get(lang) {
-            println!("Translating {} to {}...", key, lang);
             let msg = bundle.get_message(key).expect(&format!("Message '{}' in language '{}' not found", key, lang));
             let pattern = msg.value().unwrap();
             let mut errors = vec![];
