@@ -2,10 +2,14 @@ use fluent::{bundle::FluentBundle, FluentResource};
 use unic_langid::LanguageIdentifier;
 use std::collections::HashMap;
 use std::fs;
+use once_cell::sync::Lazy;
 
 pub struct Localizer {
     bundles: HashMap<String, FluentBundle<FluentResource, intl_memoizer::IntlLangMemoizer>>,
 }
+
+unsafe impl Send for Localizer {}
+unsafe impl Sync for Localizer {}
 
 impl Localizer {
     pub fn new() -> Self {
@@ -32,6 +36,7 @@ impl Localizer {
 
     pub fn translate(&self, lang: &str, key: &str, args: Option<&fluent::FluentArgs>) -> String {
         if let Some(bundle) = self.bundles.get(lang) {
+            println!("Translating {} to {}...", key, lang);
             let msg = bundle.get_message(key).unwrap();
             let pattern = msg.value().unwrap();
             let mut errors = vec![];

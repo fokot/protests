@@ -11,6 +11,8 @@ use axum::response::{IntoResponse, Redirect};
 use fluent::FluentArgs;
 use sqlx::{FromRow, PgPool};
 use sqlx::postgres::PgPoolOptions;
+use once_cell::sync::Lazy;
+use crate::localizer::Localizer;
 
 // Define a Protest structure for deserialization
 #[derive(Clone, Debug, Deserialize, FromRow)]
@@ -25,6 +27,15 @@ struct Protest {
     date: String,
     time: String,
     place: String,
+}
+
+static LOCALIZER: Lazy<Localizer> = Lazy::new(|| {
+    println!("Initializing Localizer...");
+    Localizer::new()
+});
+
+fn m(key: &str) -> String {
+    LOCALIZER.translate("en-US", key, None)
 }
 
 // Askama template for the list of protests
@@ -59,7 +70,8 @@ async fn add_protest_form() -> impl IntoResponse {
 #[template(path = "protest_edit.html")]
 pub struct ProtestEditTemplate {
     protest: Protest,
-    m: Box<dyn Fn(&str, Option<&FluentArgs>) -> String>
+    // m: fn(&str) -> String
+    // m: Box<dyn Fn(&str) -> String>
 }
 
 async fn edit_protest_form(
@@ -83,7 +95,15 @@ async fn edit_protest_form(
                     _ => format!("Unknown key: {}", key),
                 }
             });
-            let template = ProtestEditTemplate { protest, m: translate };
+
+            let m = Box::new(|key: &str| -> String {
+                match key {
+                    "welcome" => "Welcome!".to_string(),
+                    "hello" => "Hello!".to_string(),
+                    _ => format!("Unknown key: {}", key),
+                }
+            });
+            let template = ProtestEditTemplate { protest };
             Html(template.render().unwrap()).into_response()
         }
         Err(_) => (
@@ -189,7 +209,6 @@ async fn delete_protest(
 #[derive(Clone)]
 struct AppState {
     db: PgPool,
-    localizer: Arc<Mutex<localizer::Localizer>>
 }
 
 // impl AppState {
@@ -197,6 +216,8 @@ struct AppState {
 //         self.localizer.translate(lang, key, args)
 //     }
 // }
+
+
 
 
 // Main function
@@ -207,9 +228,9 @@ async fn main() {
         .max_connections(5)
         .connect("postgres://postgres:postgres@localhost:5433/protests").await.unwrap();
 
-    let localizer = Arc::new(Mutex::new(localizer::Localizer::new()));
 
-    let state = AppState { db: pool.clone(), localizer };
+
+    let state = AppState { db: pool.clone() };
 
     // Initialize database
     sqlx::query(
