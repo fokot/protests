@@ -18,8 +18,8 @@ impl Localizer {
         for path in fs::read_dir("locales").unwrap() {
             let path = path.unwrap().path();
             if path.is_file() && path.to_str().unwrap().ends_with(".ftl") {
-                let fileStem = path.file_stem().unwrap().to_str().unwrap();
-                let lang: LanguageIdentifier = fileStem.parse().unwrap();
+                let file_stem = path.file_stem().unwrap().to_str().unwrap();
+                let lang: LanguageIdentifier = file_stem.parse().unwrap();
                 let ftl = fs::read_to_string(path).unwrap();
                 let resource = FluentResource::try_new(ftl).unwrap();
                 let mut bundle = FluentBundle::new(vec![lang.clone()]);
