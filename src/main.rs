@@ -9,6 +9,7 @@ use axum_extra::extract::cookie::CookieJar;
 use axum::response::{IntoResponse, Redirect};
 use sqlx::{FromRow, PgPool};
 use sqlx::postgres::PgPoolOptions;
+use tower_http::services::ServeDir;
 use crate::localizer::for_language;
 
 // Define a Protest structure for deserialization
@@ -233,12 +234,17 @@ async fn main() {
 
     sqlx::migrate!().run(&pool).await.unwrap();
 
+
     let app = Router::new()
+        .nest_service("/assets", ServeDir::new("assets"))
         .route("/", get(list_protests))
         .route("/protests", get(list_protests))
         .route("/protests/add", get(add_protest_form).post(add_protest))
         .route("/protests/{id}/edit", get(edit_protest_form).post(edit_protest))
         .route("/protests/{id}/delete", get(delete_protest))
+        // server static files from assets directory
+
+        // .nest("/assets", axum::service::get(axum::service::files::Files::new("assets")));
         .with_state(state);
 
     println!("Starting server on port {}", config.port);

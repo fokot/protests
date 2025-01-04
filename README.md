@@ -25,6 +25,7 @@ and open [http://localhost:3000](http://localhost:3000) in your browser.
 ## Project structure
 
 ```
+├── asstes - static files server to browser
 ├── Settings.toml - configuration file
 ├── locales - fluent messages
 ├── migrations - postgres migrations
@@ -38,3 +39,13 @@ and open [http://localhost:3000](http://localhost:3000) in your browser.
 * [askama](https://github.com/rinja-rs/askama) for html templates
 * [sqlx](https://github.com/launchbadge/sqlx) as database client and migrations
 * [fluent-rs](https://github.com/projectfluent/fluent-rs) for localization
+* [tailwindcss](https://tailwindcss.com) for css
+
+
+To build `tailwindcss` have `npm` v22+ installed and run:
+```
+nmp run watch
+```
+It is needed only when you introduce new tailwind css class to html template.
+If you change only rust code or don't use new css classes it is fine not to run it.
+If there are changes always commit `main.css` file.
