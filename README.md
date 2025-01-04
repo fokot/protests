@@ -21,3 +21,20 @@ cargo run
 ```
 
 and open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Project structure
+
+```
+├── Settings.toml - configuration file
+├── locales - fluent messages
+├── migrations - postgres migrations
+├── src - rust source code
+└── templates - askama templates
+```
+
+## Technologies
+
+* [axum](https://github.com/tokio-rs/axum) as webserver
+* [askama](https://github.com/rinja-rs/askama) for html templates
+* [sqlx](https://github.com/launchbadge/sqlx) as database client and migrations
+* [fluent-rs](https://github.com/projectfluent/fluent-rs) for localization
