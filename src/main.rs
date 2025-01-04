@@ -35,10 +35,18 @@ struct ProtestsTemplate {
     lang: String
 }
 
+fn extract_language(cookies: &CookieJar) -> (String, Box<dyn Fn(&str) -> String>) {
+    let lang = cookies.get("language").map(|c| c.value().to_string()).unwrap_or("sk".to_string());
+    // return tuple (language, function)
+    (lang.clone(), for_language(lang))
+}
+
 async fn list_protests(
     State(state): State<AppState>,
     cookies: CookieJar
 ) -> Html<String> {
+    // FIXME when using extract_cookie it fails with
+    // error[E0277]: the trait bound `fn(State<AppState>, CookieJar) -> impl Future<Output = impl IntoResponse> {list_protests}: Handler<_, _>` is not satisfied
     let l = cookies.get("language").map(|c| c.value().to_string()).unwrap_or("sk".to_string());
     let lang = l.clone();
 
@@ -54,14 +62,13 @@ async fn list_protests(
 #[derive(Template)]
 #[template(path = "protest_add.html")]
 pub struct ProtestAddTemplate {
+    lang: String,
     m: Box<dyn Fn(&str) -> String>,
-    lang: String
 }
 
 async fn add_protest_form(cookies: CookieJar) -> impl IntoResponse {
-    let l = cookies.get("language").map(|c| c.value().to_string()).unwrap_or("sk".to_string());
-    let lang = l.clone();
-    let template = ProtestAddTemplate { m: for_language(l), lang } ;
+    let (lang, m) = extract_language(&cookies);
+    let template = ProtestAddTemplate { lang, m } ;
     Html(template.render().unwrap()).into_response()
 }
 
@@ -69,8 +76,8 @@ async fn add_protest_form(cookies: CookieJar) -> impl IntoResponse {
 #[template(path = "protest_edit.html")]
 pub struct ProtestEditTemplate {
     protest: Protest,
+    lang: String,
     m: Box<dyn Fn(&str) -> String>,
-    lang: String
 }
 
 async fn edit_protest_form(
@@ -88,9 +95,8 @@ async fn edit_protest_form(
 
     match protest {
         Ok(protest) => {
-            let l = cookies.get("language").map(|c| c.value().to_string()).unwrap_or("sk".to_string());
-            let lang = l.clone();
-            let template = ProtestEditTemplate { protest, m: for_language(l), lang };
+            let (lang, m) = extract_language(&cookies);
+            let template = ProtestEditTemplate { protest, lang, m };
             Html(template.render().unwrap()).into_response()
         }
         Err(_) => (
@@ -229,14 +235,8 @@ async fn main() {
 
     // Define the router
     let app = Router::new()
-        .route(
-            "/",
-            // get(|| async { Html("<h1>Welcome to the Protest App</h1>") }),
-            get(list_protests)
-        )
-        .route(
-            "/protests",
-            get(list_protests))
+        .route("/", get(list_protests))
+        .route("/protests", get(list_protests))
         .route("/protests/add", get(add_protest_form).post(add_protest))
         .route("/protests/{id}/edit", get(edit_protest_form).post(edit_protest))
         .route("/protests/{id}/delete", get(delete_protest))
