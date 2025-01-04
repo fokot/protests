@@ -204,13 +204,30 @@ struct AppState {
     db: PgPool,
 }
 
+#[derive(Debug, Deserialize)]
+struct Config {
+    port: u16,
+    db_url: String,
+}
+
 // Main function
 #[tokio::main]
 async fn main() {
+
+    let settings = config::Config::builder()
+        .add_source(config::File::with_name("Settings"))
+        // Add in settings from the environment (with a prefix of APP)
+        // Eg.. `APP_DEBUG=1 ./target/app` would set the `debug` key
+        .add_source(config::Environment::with_prefix("APP"))
+        .build()
+        .unwrap();
+
+    let config = settings.try_deserialize::<Config>().unwrap();
+
     let pool =
         PgPoolOptions::new()
         .max_connections(5)
-        .connect("postgres://protests:protests@localhost:5432/protests").await.unwrap();
+        .connect(config.db_url.as_str()).await.unwrap();
 
     let state = AppState { db: pool.clone() };
 
@@ -232,8 +249,6 @@ async fn main() {
 
     // sqlx::migrate!("migrations").run(&pool).await.unwrap();
 
-
-    // Define the router
     let app = Router::new()
         .route("/", get(list_protests))
         .route("/protests", get(list_protests))
@@ -242,7 +257,7 @@ async fn main() {
         .route("/protests/{id}/delete", get(delete_protest))
         .with_state(state);
 
-    // Start the server
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    println!("Starting server on port {}", config.port);
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", config.port)).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
