@@ -2,6 +2,7 @@ use fluent::{bundle::FluentBundle, FluentResource};
 use unic_langid::LanguageIdentifier;
 use std::collections::HashMap;
 use std::fs;
+use once_cell::sync::Lazy;
 
 pub struct Localizer {
     bundles: HashMap<String, FluentBundle<FluentResource, intl_memoizer::IntlLangMemoizer>>,
@@ -30,15 +31,21 @@ impl Localizer {
 
         Localizer { bundles }
     }
-
-    pub fn translate(&self, lang: &str, key: &str, args: Option<&fluent::FluentArgs>) -> String {
-        if let Some(bundle) = self.bundles.get(lang) {
-            let msg = bundle.get_message(key).expect(&format!("Message '{}' in language '{}' not found", key, lang));
-            let pattern = msg.value().unwrap();
-            let mut errors = vec![];
-            bundle.format_pattern(pattern, args, &mut errors).to_string()
-        } else {
-            format!("Translations for language '{}' not found", lang).to_string()
-        }
-    }
 }
+
+static LOCALIZER: Lazy<Localizer> = Lazy::new(|| {
+    println!("Initializing Localizer...");
+    Localizer::new()
+});
+
+pub fn for_language(lang: String) -> Box<dyn Fn(&str) -> String> {
+    let bundle = LOCALIZER.bundles.get(lang.as_str()).expect(&format!("Language '{}' not found", lang));
+
+    Box::new(move |key: &str| {
+        let msg = bundle.get_message(key).expect(&format!("Message '{}' in language '{}' not found", key, lang));
+        let pattern = msg.value().unwrap();
+        let mut errors = vec![];
+        bundle.format_pattern(pattern, None, &mut errors).to_string()
+    })
+}
+

@@ -9,8 +9,7 @@ use axum_extra::extract::cookie::CookieJar;
 use axum::response::{IntoResponse, Redirect};
 use sqlx::{FromRow, PgPool};
 use sqlx::postgres::PgPoolOptions;
-use once_cell::sync::Lazy;
-use crate::localizer::Localizer;
+use crate::localizer::for_language;
 
 // Define a Protest structure for deserialization
 #[derive(Clone, Debug, Deserialize, FromRow)]
@@ -27,11 +26,6 @@ struct Protest {
     place: String,
 }
 
-static LOCALIZER: Lazy<Localizer> = Lazy::new(|| {
-    println!("Initializing Localizer...");
-    Localizer::new()
-});
-
 // Askama template for the list of protests
 #[derive(Template)]
 #[template(path = "protests.html")]
@@ -45,16 +39,15 @@ async fn list_protests(
     State(state): State<AppState>,
     cookies: CookieJar
 ) -> Html<String> {
-    let lang = cookies.get("language").map(|c| c.value().to_string()).unwrap_or("sk".to_string());
-    let l = lang.clone();
-    let m = Box::new(move |key: &str| LOCALIZER.translate(lang.as_str(), key, None) );
+    let l = cookies.get("language").map(|c| c.value().to_string()).unwrap_or("sk".to_string());
+    let lang = l.clone();
 
     let protests = sqlx::query_as::<_, Protest>(
         "SELECT id, name, description, labels, town, region, country, date, time, place FROM protests ORDER BY id"
     )
     .fetch_all(&state.db).await.unwrap();
 
-    let template = ProtestsTemplate { protests, m, lang: l };
+    let template = ProtestsTemplate { protests, m: for_language(l), lang };
     Html(template.render().unwrap())
 }
 
@@ -66,10 +59,9 @@ pub struct ProtestAddTemplate {
 }
 
 async fn add_protest_form(cookies: CookieJar) -> impl IntoResponse {
-    let lang = cookies.get("language").map(|c| c.value().to_string()).unwrap_or("sk".to_string());
-    let l = lang.clone();
-    let m = Box::new(move |key: &str| LOCALIZER.translate(lang.as_str(), key, None) );
-    let template = ProtestAddTemplate { m, lang: l } ;
+    let l = cookies.get("language").map(|c| c.value().to_string()).unwrap_or("sk".to_string());
+    let lang = l.clone();
+    let template = ProtestAddTemplate { m: for_language(l), lang } ;
     Html(template.render().unwrap()).into_response()
 }
 
@@ -96,10 +88,9 @@ async fn edit_protest_form(
 
     match protest {
         Ok(protest) => {
-            let lang = cookies.get("language").map(|c| c.value().to_string()).unwrap_or("sk".to_string());
-            let l = lang.clone();
-            let m = Box::new(move |key: &str| LOCALIZER.translate(lang.as_str(), key, None) );
-            let template = ProtestEditTemplate { protest, m, lang: l };
+            let l = cookies.get("language").map(|c| c.value().to_string()).unwrap_or("sk".to_string());
+            let lang = l.clone();
+            let template = ProtestEditTemplate { protest, m: for_language(l), lang };
             Html(template.render().unwrap()).into_response()
         }
         Err(_) => (
@@ -169,7 +160,7 @@ async fn edit_protest(
         .bind(&protest.date)
         .bind(&protest.time)
         .bind(&protest.place)
-        .bind(&protest.id)
+        .bind(protest.id)
         .execute(&state.db)
         .await;
 
@@ -232,6 +223,8 @@ async fn main() {
                 place TEXT NOT NULL
             )",
         ).execute(&pool).await.unwrap();
+
+    // sqlx::migrate!("migrations").run(&pool).await.unwrap();
 
 
     // Define the router
