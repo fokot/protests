@@ -213,7 +213,7 @@ async fn main() {
     let pool =
         PgPoolOptions::new()
         .max_connections(5)
-        .connect("postgres://postgres:postgres@localhost:5433/protests").await.unwrap();
+        .connect("postgres://protests:protests@localhost:5432/protests").await.unwrap();
 
     let state = AppState { db: pool.clone() };
 
