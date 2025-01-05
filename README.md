@@ -22,6 +22,12 @@ cargo run
 
 and open [http://localhost:3000](http://localhost:3000) in your browser.
 
+For development you can use `cargo watch` to automatically recompile the code:
+```
+cargo install cargo-watch
+cargo watch -x run
+```
+
 ## Project structure
 
 ```
