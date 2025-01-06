@@ -5,34 +5,23 @@
 {% block content %}
 <form action="/protests/add" method="post">
 
-    <input type="hidden" name="id" value="-1">
-
-    <label for="name">{{ m("name") }}:</label>
-    <input type="text" id="name" name="name" required><br>
+    <label for="title">{{ m("title") }}:</label>
+    <input type="text" id="title" name="title" required><br>
 
     <label for="description">{{ m("description") }}:</label>
     <textarea id="description" name="description" required></textarea><br>
 
-    <label for="labels">{{ m("labels") }}:</label>
-    <input type="text" id="labels" name="labels" required><br>
-
-    <label for="town">{{ m("town") }}:</label>
-    <input type="text" id="town" name="town" required><br>
-
-    <label for="region">{{ m("region") }}:</label>
-    <input type="text" id="region" name="region" required><br>
-
-    <label for="country">{{ m("country") }}:</label>
-    <input type="text" id="country" name="country" required><br>
+    <label for="tags">{{ m("tags") }}:</label>
+    <input type="text" id="tags" name="tags"><br>
 
     <label for="date">{{ m("date") }}:</label>
-    <input type="text" id="date" name="date" required><br>
+    <input type="date" id="date" name="date" required><br>
 
     <label for="time">{{ m("time") }}:</label>
-    <input type="text" id="time" name="time" required><br>
+    <input type="time" id="time" name="time" required><br>
 
-    <label for="place">{{ m("place") }}:</label>
-    <input type="text" id="place" name="place" required><br>
+    <label for="location">{{ m("location") }}:</label>
+    <input type="text" id="location" name="location" required><br>
 
     <button type="submit">{{ m("add_protest") }}</button>
 </form>

@@ -2,6 +2,7 @@ mod localizer;
 mod repository;
 mod routes_protest;
 mod routes_utils;
+mod model;
 
 use crate::routes_protest::{
     add_protest, add_protest_form, delete_protest, edit_protest, edit_protest_form, list_protests,
@@ -9,22 +10,8 @@ use crate::routes_protest::{
 use axum::{routing::get, Router};
 use serde::Deserialize;
 use sqlx::postgres::PgPoolOptions;
-use sqlx::{FromRow, PgPool};
+use sqlx::PgPool;
 use tower_http::services::ServeDir;
-
-#[derive(Clone, Debug, Deserialize, FromRow)]
-struct Protest {
-    id: i32,
-    name: String,
-    description: String,
-    labels: String,
-    town: String,
-    region: String,
-    country: String,
-    date: String,
-    time: String,
-    place: String,
-}
 
 #[derive(Clone)]
 struct AppState {

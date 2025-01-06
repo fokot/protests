@@ -6,24 +6,45 @@
     <a href="/protests/add">
         <button type="button">{{ m("add_protest") }}</button>
     </a>
-    <ul class="box-border bg-green-400">
+
+    <form>
+        <label for="city">{{ m("city") }}:</label>
+        <input type="text" id="city" name="city"><br>
+
+        <label for="date_from">{{ m("date_from") }}:</label>
+        <input type="date" id="date_from" name="date_from"><br>
+
+        <label for="tags">{{ m("tags") }}:</label>
+        <select id="tags" name="tags" multiple>
+            {% for tag in tags %}
+            <option value="{{ tag }}">{{ tag }}</option>
+            {% endfor %}
+        </select><br>
+
+        <label for="created_by">{{ m("created_by") }}:</label>
+        <input type="text" id="created_by" name="created_by"><br>
+
+        <button type="submit">{{ m("search") }}</button>
+    </form>
+
+    <section class="box-border bg-green-400">
         {% for protest in protests %}
-        <li>
+        <aside>
             <h2>
-                <a href="/protests/{{ protest.id }}/edit">{{ protest.name }}</a>
+                <a href="/protests/{{ protest.id }}/edit">{{ protest.title }}</a>
             </h2>
             <p>{{ protest.description }}</p>
-            <p><strong>Labels:</strong> {{ protest.labels }}</p>
-            <p>
-                <strong>Location:</strong> {{ protest.town }}, {{
-                protest.region }}, {{ protest.country }}
-            </p>
-            <p>
-                <strong>Date & Time:</strong> {{ protest.date }} {{
-                protest.time }}
-            </p>
-            <p><strong>Place:</strong> {{ protest.place }}</p>
-        </li>
+            <ul>
+                {% for tag in protest.tags %}
+                <li>{{ tag }}</li>
+                {% endfor %}
+            </ul>
+            <div>
+                {{m("date")}}:<strong> {{ protest.date }}</strong><br>
+                {{m("time")}}:<strong>{{ protest.time }}</strong><br>
+                {{m("location")}}:<strong>{{ protest.town.clone().unwrap_or("".to_string()) }}, {{ protest.region.clone().unwrap_or("".to_string()) }}, {{ protest.location }}</strong>
+            </div>
+        </aside>
         {% endfor %}
-    </ul>
+    </section>
 {% endblock %}

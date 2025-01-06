@@ -4,9 +4,18 @@ labels = Štítky
 town = Mesto
 region = Región
 country = Krajina
+place = Miesto
+title = Názov
+
+city = Mesto
+date_from = Dátum od
+tags = Štítky
+organizer = Organizátor
+created_by = Vytvoril
+search = Hľadať
 date = Dátum
 time = Čas
-place = Miesto
+location = Miesto
 
 protests = Protesty
 add_protest = Vytvor protest

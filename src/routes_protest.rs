@@ -4,14 +4,16 @@ use axum::Form;
 use axum::http::StatusCode;
 use axum::response::{Html, IntoResponse, Redirect};
 use axum_extra::extract::CookieJar;
-use crate::{repository, AppState, Protest};
+use crate::{repository, AppState};
 use crate::localizer::for_language;
 use crate::routes_utils::extract_language;
+use crate::model::{Protest, ProtestSave};
 
 #[derive(Template)]
 #[template(path = "protests.html")]
 struct ProtestsTemplate {
     protests: Vec<Protest>,
+    tags: Vec<String>,
     m: Box<dyn Fn(&str) -> String>,
     lang: String
 }
@@ -27,7 +29,7 @@ pub async fn list_protests(
 
     let protests = repository::list_protests(&state.db).await.unwrap();
 
-    let template = ProtestsTemplate { protests, m: for_language(l), lang };
+    let template = ProtestsTemplate { protests, tags: Vec::new(), m: for_language(l), lang };
     Html(template.render().unwrap())
 }
 
@@ -46,7 +48,7 @@ pub async fn add_protest_form(cookies: CookieJar) -> impl IntoResponse {
 
 pub async fn add_protest(
     State(state): State<AppState>,
-    Form(protest): Form<Protest>,
+    Form(protest): Form<ProtestSave>,
 ) -> impl IntoResponse {
     let result = repository::create_protest(&state.db, &protest).await;
 
