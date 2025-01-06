@@ -1,13 +1,12 @@
 mod localizer;
 mod repository;
 mod routes_protest;
+mod routes_utils;
 
-use crate::localizer::for_language;
 use crate::routes_protest::{
     add_protest, add_protest_form, delete_protest, edit_protest, edit_protest_form, list_protests,
 };
 use axum::{routing::get, Router};
-use axum_extra::extract::cookie::CookieJar;
 use serde::Deserialize;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{FromRow, PgPool};
@@ -27,15 +26,6 @@ struct Protest {
     place: String,
 }
 
-fn extract_language(cookies: &CookieJar) -> (String, Box<dyn Fn(&str) -> String>) {
-    let lang = cookies
-        .get("language")
-        .map(|c| c.value().to_string())
-        .unwrap_or("sk".to_string());
-    // return tuple (language, function)
-    (lang.clone(), for_language(lang))
-}
-
 #[derive(Clone)]
 struct AppState {
     db: PgPool,
@@ -47,9 +37,7 @@ struct Config {
     db_url: String,
 }
 
-// Main function
-#[tokio::main]
-async fn main() {
+fn load_config() -> Config {
     let settings = config::Config::builder()
         .add_source(config::File::with_name("Settings"))
         // Add in settings from the environment (with a prefix of APP)
@@ -58,17 +46,24 @@ async fn main() {
         .build()
         .unwrap();
 
-    let config = settings.try_deserialize::<Config>().unwrap();
+    settings.try_deserialize::<Config>().unwrap()
+}
 
-    let pool = PgPoolOptions::new()
+async fn create_db_pool(config: &Config) -> PgPool {
+    PgPoolOptions::new()
         .max_connections(5)
         .connect(config.db_url.as_str())
         .await
-        .unwrap();
+        .unwrap()
+}
 
+// Main function
+#[tokio::main]
+async fn main() {
+    let config = load_config();
+    let pool = create_db_pool(&config).await;
     let state = AppState { db: pool.clone() };
-
-    // sqlx::migrate!().run(&pool).await.unwrap();
+    sqlx::migrate!().run(&pool).await.unwrap();
 
     let app = Router::new()
         .nest_service("/assets", ServeDir::new("assets"))

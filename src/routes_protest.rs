@@ -4,8 +4,9 @@ use axum::Form;
 use axum::http::StatusCode;
 use axum::response::{Html, IntoResponse, Redirect};
 use axum_extra::extract::CookieJar;
-use crate::{extract_language, repository, AppState, Protest};
+use crate::{repository, AppState, Protest};
 use crate::localizer::for_language;
+use crate::routes_utils::extract_language;
 
 #[derive(Template)]
 #[template(path = "protests.html")]
