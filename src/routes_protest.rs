@@ -1,0 +1,122 @@
+use askama::Template;
+use axum::extract::{Path, State};
+use axum::Form;
+use axum::http::StatusCode;
+use axum::response::{Html, IntoResponse, Redirect};
+use axum_extra::extract::CookieJar;
+use crate::{extract_language, repository, AppState, Protest};
+use crate::localizer::for_language;
+
+#[derive(Template)]
+#[template(path = "protests.html")]
+struct ProtestsTemplate {
+    protests: Vec<Protest>,
+    m: Box<dyn Fn(&str) -> String>,
+    lang: String
+}
+
+pub async fn list_protests(
+    State(state): State<AppState>,
+    cookies: CookieJar
+) -> Html<String> {
+    // FIXME when using extract_cookie it fails with
+    // error[E0277]: the trait bound `fn(State<AppState>, CookieJar) -> impl Future<Output = impl IntoResponse> {list_protests}: Handler<_, _>` is not satisfied
+    let l = cookies.get("language").map(|c| c.value().to_string()).unwrap_or("sk".to_string());
+    let lang = l.clone();
+
+    let protests = repository::list_protests(&state.db).await.unwrap();
+
+    let template = ProtestsTemplate { protests, m: for_language(l), lang };
+    Html(template.render().unwrap())
+}
+
+#[derive(Template)]
+#[template(path = "protest_add.html")]
+struct ProtestAddTemplate {
+    lang: String,
+    m: Box<dyn Fn(&str) -> String>,
+}
+
+pub async fn add_protest_form(cookies: CookieJar) -> impl IntoResponse {
+    let (lang, m) = extract_language(&cookies);
+    let template = ProtestAddTemplate { lang, m } ;
+    Html(template.render().unwrap()).into_response()
+}
+
+pub async fn add_protest(
+    State(state): State<AppState>,
+    Form(protest): Form<Protest>,
+) -> impl IntoResponse {
+    let result = repository::create_protest(&state.db, &protest).await;
+
+    match result {
+        Ok(_) => Redirect::to("/protests").into_response(),
+        Err(err) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to add protest: {}", err),
+        )
+            .into_response(),
+    }
+}
+
+#[derive(Template)]
+#[template(path = "protest_edit.html")]
+struct ProtestEditTemplate {
+    protest: Protest,
+    lang: String,
+    m: Box<dyn Fn(&str) -> String>,
+}
+
+pub async fn edit_protest_form(
+    State(state): State<AppState>,
+    Path(protest_id): Path<i32>,
+    cookies: CookieJar,
+) -> impl IntoResponse {
+    // Fetch the protest from the database
+    let protest = repository::get_protest(&state.db, protest_id).await;
+
+    match protest {
+        Ok(protest) => {
+            let (lang, m) = extract_language(&cookies);
+            let template = ProtestEditTemplate { protest, lang, m };
+            Html(template.render().unwrap()).into_response()
+        }
+        Err(_) => (
+            StatusCode::NOT_FOUND,
+            "Protest not found".to_string(),
+        )
+            .into_response(),
+    }
+}
+
+pub async fn edit_protest(
+    State(state): State<AppState>,
+    Form(protest): Form<Protest>,
+) -> impl IntoResponse {
+    // Update the protest in the database
+    let result = repository::edit_protest(&state.db, &protest).await;
+
+    match result {
+        Ok(_) => Redirect::to("/protests").into_response(),
+        Err(err) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to update protest: {}", err),
+        )
+            .into_response(),
+    }
+}
+
+pub async fn delete_protest(
+    State(state): State<AppState>,
+    Path(protest_id): Path<i32>,
+) -> impl IntoResponse {
+    let result = repository::delete_protest(&state.db, protest_id).await;
+    match result {
+        Ok(_) => Redirect::to("/protests").into_response(),
+        Err(err) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to delete protest: {}", err),
+        )
+            .into_response(),
+    }
+}

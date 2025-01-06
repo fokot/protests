@@ -1,19 +1,18 @@
 mod localizer;
 mod repository;
+mod routes_protest;
 
-use askama::Template;
-use axum::{response::Html, routing::get, Form, Router};
-use serde::Deserialize;
-use axum::extract::{Path, State};
-use axum::http::StatusCode;
-use axum_extra::extract::cookie::CookieJar;
-use axum::response::{IntoResponse, Redirect};
-use sqlx::{FromRow, PgPool};
-use sqlx::postgres::PgPoolOptions;
-use tower_http::services::ServeDir;
 use crate::localizer::for_language;
+use crate::routes_protest::{
+    add_protest, add_protest_form, delete_protest, edit_protest, edit_protest_form, list_protests,
+};
+use axum::{routing::get, Router};
+use axum_extra::extract::cookie::CookieJar;
+use serde::Deserialize;
+use sqlx::postgres::PgPoolOptions;
+use sqlx::{FromRow, PgPool};
+use tower_http::services::ServeDir;
 
-// Define a Protest structure for deserialization
 #[derive(Clone, Debug, Deserialize, FromRow)]
 struct Protest {
     id: i32,
@@ -28,127 +27,13 @@ struct Protest {
     place: String,
 }
 
-// Askama template for the list of protests
-#[derive(Template)]
-#[template(path = "protests.html")]
-struct ProtestsTemplate {
-    protests: Vec<Protest>,
-    m: Box<dyn Fn(&str) -> String>,
-    lang: String
-}
-
 fn extract_language(cookies: &CookieJar) -> (String, Box<dyn Fn(&str) -> String>) {
-    let lang = cookies.get("language").map(|c| c.value().to_string()).unwrap_or("sk".to_string());
+    let lang = cookies
+        .get("language")
+        .map(|c| c.value().to_string())
+        .unwrap_or("sk".to_string());
     // return tuple (language, function)
     (lang.clone(), for_language(lang))
-}
-
-async fn list_protests(
-    State(state): State<AppState>,
-    cookies: CookieJar
-) -> Html<String> {
-    // FIXME when using extract_cookie it fails with
-    // error[E0277]: the trait bound `fn(State<AppState>, CookieJar) -> impl Future<Output = impl IntoResponse> {list_protests}: Handler<_, _>` is not satisfied
-    let l = cookies.get("language").map(|c| c.value().to_string()).unwrap_or("sk".to_string());
-    let lang = l.clone();
-
-    let protests = repository::list_protests(&state.db).await.unwrap();
-
-    let template = ProtestsTemplate { protests, m: for_language(l), lang };
-    Html(template.render().unwrap())
-}
-
-#[derive(Template)]
-#[template(path = "protest_add.html")]
-pub struct ProtestAddTemplate {
-    lang: String,
-    m: Box<dyn Fn(&str) -> String>,
-}
-
-async fn add_protest_form(cookies: CookieJar) -> impl IntoResponse {
-    let (lang, m) = extract_language(&cookies);
-    let template = ProtestAddTemplate { lang, m } ;
-    Html(template.render().unwrap()).into_response()
-}
-
-#[derive(Template)]
-#[template(path = "protest_edit.html")]
-pub struct ProtestEditTemplate {
-    protest: Protest,
-    lang: String,
-    m: Box<dyn Fn(&str) -> String>,
-}
-
-async fn edit_protest_form(
-    State(state): State<AppState>,
-    Path(protest_id): Path<i32>,
-    cookies: CookieJar,
-) -> impl IntoResponse {
-    // Fetch the protest from the database
-    let protest = repository::get_protest(&state.db, protest_id).await;
-
-    match protest {
-        Ok(protest) => {
-            let (lang, m) = extract_language(&cookies);
-            let template = ProtestEditTemplate { protest, lang, m };
-            Html(template.render().unwrap()).into_response()
-        }
-        Err(_) => (
-            StatusCode::NOT_FOUND,
-            "Protest not found".to_string(),
-        )
-            .into_response(),
-    }
-}
-
-
-// Route to handle form submission and add protest to the database
-async fn add_protest(
-    State(state): State<AppState>,
-    Form(protest): Form<Protest>,
-) -> impl IntoResponse {
-    let result = repository::create_protest(&state.db, &protest).await;
-
-    match result {
-        Ok(_) => Redirect::to("/protests").into_response(),
-        Err(err) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to add protest: {}", err),
-        )
-            .into_response(),
-    }
-}
-
-async fn edit_protest(
-    State(state): State<AppState>,
-    Form(protest): Form<Protest>,
-) -> impl IntoResponse {
-    // Update the protest in the database
-    let result = repository::get_protest(&state.db, protest.id).await;
-
-    match result {
-        Ok(_) => Redirect::to("/protests").into_response(),
-        Err(err) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to update protest: {}", err),
-        )
-            .into_response(),
-    }
-}
-
-async fn delete_protest(
-    State(state): State<AppState>,
-    Path(protest_id): Path<i32>,
-) -> impl IntoResponse {
-    let result = repository::get_protest(&state.db, protest_id).await;
-    match result {
-        Ok(_) => Redirect::to("/protests").into_response(),
-        Err(err) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to delete protest: {}", err),
-        )
-            .into_response(),
-    }
 }
 
 #[derive(Clone)]
@@ -165,7 +50,6 @@ struct Config {
 // Main function
 #[tokio::main]
 async fn main() {
-
     let settings = config::Config::builder()
         .add_source(config::File::with_name("Settings"))
         // Add in settings from the environment (with a prefix of APP)
@@ -176,28 +60,33 @@ async fn main() {
 
     let config = settings.try_deserialize::<Config>().unwrap();
 
-    let pool =
-        PgPoolOptions::new()
+    let pool = PgPoolOptions::new()
         .max_connections(5)
-        .connect(config.db_url.as_str()).await.unwrap();
+        .connect(config.db_url.as_str())
+        .await
+        .unwrap();
 
     let state = AppState { db: pool.clone() };
 
-    sqlx::migrate!().run(&pool).await.unwrap();
+    // sqlx::migrate!().run(&pool).await.unwrap();
 
     let app = Router::new()
         .nest_service("/assets", ServeDir::new("assets"))
         .route("/", get(list_protests))
         .route("/protests", get(list_protests))
         .route("/protests/add", get(add_protest_form).post(add_protest))
-        .route("/protests/{id}/edit", get(edit_protest_form).post(edit_protest))
+        .route(
+            "/protests/{id}/edit",
+            get(edit_protest_form).post(edit_protest),
+        )
         .route("/protests/{id}/delete", get(delete_protest))
         // server static files from assets directory
-
         // .nest("/assets", axum::service::get(axum::service::files::Files::new("assets")));
         .with_state(state);
 
     println!("Starting server on port {}", config.port);
-    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", config.port)).await.unwrap();
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", config.port))
+        .await
+        .unwrap();
     axum::serve(listener, app).await.unwrap();
 }
