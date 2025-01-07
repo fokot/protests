@@ -3,11 +3,14 @@ mod repository;
 mod routes_protest;
 mod routes_utils;
 mod model;
+mod routes_user;
 
 use crate::routes_protest::{
     add_protest, add_protest_form, delete_protest, edit_protest, edit_protest_form, list_protests,
 };
 use axum::{routing::get, Router};
+use axum::extract::FromRef;
+use axum_extra::extract::cookie::Key;
 use serde::Deserialize;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
@@ -16,12 +19,14 @@ use tower_http::services::ServeDir;
 #[derive(Clone)]
 struct AppState {
     db: PgPool,
+    web_key: Key
 }
 
 #[derive(Debug, Deserialize)]
 struct Config {
     port: u16,
     db_url: String,
+    web_key: String,
 }
 
 fn load_config() -> Config {
@@ -44,12 +49,20 @@ async fn create_db_pool(config: &Config) -> PgPool {
         .unwrap()
 }
 
+// this impl tells `SignedCookieJar` how to access the key from our state
+impl FromRef<AppState> for Key {
+    fn from_ref(state: &AppState) -> Self {
+        state.web_key.clone()
+    }
+}
+
 // Main function
 #[tokio::main]
 async fn main() {
     let config = load_config();
     let pool = create_db_pool(&config).await;
-    let state = AppState { db: pool.clone() };
+    let web_key = Key::from(config.web_key.as_bytes());
+    let state = AppState { db: pool.clone(), web_key };
     sqlx::migrate!().run(&pool).await.unwrap();
 
     let app = Router::new()

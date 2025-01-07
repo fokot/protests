@@ -2,6 +2,8 @@ CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     email TEXT NOT NULL,
     name TEXT,
+    login_code TEXT,
+    login_code_created TIMESTAMP,
     created TIMESTAMP NOT NULL DEFAULT now()
 );
 

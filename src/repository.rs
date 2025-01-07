@@ -184,3 +184,13 @@ pub async fn delete_protest(db: &PgPool, id: i32) -> Result<(), Error> {
         .execute(db).await?;
     Ok(())
 }
+
+pub async fn login_user(db: &PgPool, user_id: &str, login_code: &str, expiration_days: i32) -> Result<Option<i32>, Error> {
+    sqlx::query_scalar(
+        r#"SELECT id FROM users WHERE id = $1 AND login_code = $2 AND NOW() < (created_at + INTERVAL '$3 days')"#
+    )
+        .bind(user_id)
+        .bind(login_code)
+        .bind(expiration_days)
+        .fetch_optional(db).await
+}

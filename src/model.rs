@@ -65,3 +65,8 @@ pub struct ProtestSearch {
     #[serde(deserialize_with = "empty_string_as_none")]
     pub created_by: Option<String>,
 }
+
+#[derive(Deserialize)]
+pub struct AuthData {
+    pub user_id: i32,
+}

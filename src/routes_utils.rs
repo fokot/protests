@@ -1,7 +1,7 @@
-use axum_extra::extract::CookieJar;
+use axum_extra::extract::SignedCookieJar;
 use crate::localizer::for_language;
 
-pub fn extract_language(cookies: &CookieJar) -> (String, Box<dyn Fn(&str) -> String>) {
+pub fn extract_language(cookies: &SignedCookieJar) -> (String, Box<dyn Fn(&str) -> String>) {
     let lang = cookies
         .get("language")
         .map(|c| c.value().to_string())

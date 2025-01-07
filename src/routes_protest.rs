@@ -3,7 +3,7 @@ use axum::extract::{Path, Query, State};
 use axum::Form;
 use axum::http::StatusCode;
 use axum::response::{Html, IntoResponse, Redirect};
-use axum_extra::extract::CookieJar;
+use axum_extra::extract::SignedCookieJar;
 use crate::{repository, AppState};
 use crate::localizer::for_language;
 use crate::routes_utils::extract_language;
@@ -20,11 +20,11 @@ struct ProtestsTemplate {
 
 pub async fn list_protests(
     State(state): State<AppState>,
-    cookies: CookieJar,
+    cookies: SignedCookieJar,
     Query(search): Query<ProtestSearch>,
 ) -> Html<String> {
     // FIXME when using extract_cookie it fails with
-    // error[E0277]: the trait bound `fn(State<AppState>, CookieJar) -> impl Future<Output = impl IntoResponse> {list_protests}: Handler<_, _>` is not satisfied
+    // error[E0277]: the trait bound `fn(State<AppState>, SignedCookieJar) -> impl Future<Output = impl IntoResponse> {list_protests}: Handler<_, _>` is not satisfied
     let l = cookies.get("language").map(|c| c.value().to_string()).unwrap_or("sk".to_string());
     let lang = l.clone();
 
@@ -41,7 +41,7 @@ struct ProtestAddTemplate {
     m: Box<dyn Fn(&str) -> String>,
 }
 
-pub async fn add_protest_form(cookies: CookieJar) -> impl IntoResponse {
+pub async fn add_protest_form(cookies: SignedCookieJar) -> impl IntoResponse {
     let (lang, m) = extract_language(&cookies);
     let template = ProtestAddTemplate { lang, m } ;
     Html(template.render().unwrap()).into_response()
@@ -74,7 +74,7 @@ struct ProtestEditTemplate {
 pub async fn edit_protest_form(
     State(state): State<AppState>,
     Path(protest_id): Path<i32>,
-    cookies: CookieJar,
+    cookies: SignedCookieJar,
 ) -> impl IntoResponse {
     // Fetch the protest from the database
     let protest = repository::get_protest(&state.db, protest_id).await;
