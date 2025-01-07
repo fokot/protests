@@ -20,6 +20,14 @@ where
     Time::parse(&s, &format).map_err(serde::de::Error::custom)
 }
 
+fn empty_string_as_none<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s: Option<String> = Option::deserialize(deserializer)?;
+    Ok(s.filter(|s| !s.trim().is_empty()))
+}
+
 #[derive(Clone, Debug, Deserialize, FromRow)]
 pub struct Protest {
     pub id: i32,
@@ -45,4 +53,15 @@ pub struct ProtestSave {
     #[serde(deserialize_with = "deserialize_time")]
     pub time: Time,
     pub location: String,
+}
+
+#[derive(Deserialize)]
+pub struct ProtestSearch {
+    #[serde(deserialize_with = "empty_string_as_none")]
+    pub town: Option<String>,
+    #[serde(deserialize_with = "empty_string_as_none")]
+    pub date_from: Option<String>,
+    pub tags: Option<Vec<String>>,
+    #[serde(deserialize_with = "empty_string_as_none")]
+    pub created_by: Option<String>,
 }

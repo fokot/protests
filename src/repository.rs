@@ -1,9 +1,31 @@
 use sqlx::{Error, PgPool};
-use crate::model::{Protest, ProtestSave};
+use crate::model::{Protest, ProtestSave, ProtestSearch};
 
 
-pub async fn list_protests(db: &PgPool) -> Result<Vec<Protest>, Error> {
-    sqlx::query_as::<_, Protest>(
+pub async fn list_protests(db: &PgPool, search: ProtestSearch) -> Result<Vec<Protest>, Error> {
+
+    let mut where_clauses = vec!["p.deleted IS NULL".to_string()];
+
+    if let Some(town) = &search.town {
+        where_clauses.push(format!("(r.name = '{}' OR r2.name = '{}')", town, town));
+    }
+
+    if let Some(date_from) = &search.date_from {
+        where_clauses.push(format!("p.protest_date >= '{}'", date_from));
+    }
+
+    if let Some(tags) = &search.tags {
+        let tags_list = tags.iter().map(|tag| format!("'{}'", tag)).collect::<Vec<_>>().join(", ");
+        where_clauses.push(format!("t.name IN ({})", tags_list));
+    }
+
+    if let Some(created_by) = &search.created_by {
+        where_clauses.push(format!("u.name = '{}'", created_by));
+    }
+
+    let where_expression = where_clauses.join(" AND ");
+
+    let query = format!(
     r#"SELECT
             p.id,
             p.title,
@@ -24,11 +46,13 @@ pub async fn list_protests(db: &PgPool) -> Result<Vec<Protest>, Error> {
             protest_tag pt ON p.id = pt.protest_id
                 LEFT JOIN
             tag t ON pt.tag_id = t.id
-        WHERE p.deleted IS NULL
+        WHERE {}
         GROUP BY
-            p.id, r.name, r2.name"#
+            p.id, r.name, r2.name"#,
+        where_expression
+    );
 
-    ).fetch_all(db).await
+    sqlx::query_as::<_, Protest>(&query).fetch_all(db).await
 }
 
 pub async fn get_protest(db: &PgPool, id: i32) -> Result<Protest, Error> {

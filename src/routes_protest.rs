@@ -1,5 +1,5 @@
 use askama::Template;
-use axum::extract::{Path, State};
+use axum::extract::{Path, Query, State};
 use axum::Form;
 use axum::http::StatusCode;
 use axum::response::{Html, IntoResponse, Redirect};
@@ -7,7 +7,7 @@ use axum_extra::extract::CookieJar;
 use crate::{repository, AppState};
 use crate::localizer::for_language;
 use crate::routes_utils::extract_language;
-use crate::model::{Protest, ProtestSave};
+use crate::model::{Protest, ProtestSave, ProtestSearch};
 
 #[derive(Template)]
 #[template(path = "protests.html")]
@@ -20,14 +20,15 @@ struct ProtestsTemplate {
 
 pub async fn list_protests(
     State(state): State<AppState>,
-    cookies: CookieJar
+    cookies: CookieJar,
+    Query(search): Query<ProtestSearch>,
 ) -> Html<String> {
     // FIXME when using extract_cookie it fails with
     // error[E0277]: the trait bound `fn(State<AppState>, CookieJar) -> impl Future<Output = impl IntoResponse> {list_protests}: Handler<_, _>` is not satisfied
     let l = cookies.get("language").map(|c| c.value().to_string()).unwrap_or("sk".to_string());
     let lang = l.clone();
 
-    let protests = repository::list_protests(&state.db).await.unwrap();
+    let protests = repository::list_protests(&state.db, search).await.unwrap();
 
     let template = ProtestsTemplate { protests, tags: Vec::new(), m: for_language(l), lang };
     Html(template.render().unwrap())

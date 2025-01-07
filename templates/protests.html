@@ -7,9 +7,9 @@
         <button type="button">{{ m("add_protest") }}</button>
     </a>
 
-    <form>
-        <label for="city">{{ m("city") }}:</label>
-        <input type="text" id="city" name="city"><br>
+    <form method="get" action="/protests">
+        <label for="town">{{ m("town") }}:</label>
+        <input type="text" id="town" name="town"><br>
 
         <label for="date_from">{{ m("date_from") }}:</label>
         <input type="date" id="date_from" name="date_from"><br>
