@@ -38,7 +38,9 @@ static LOCALIZER: Lazy<Localizer> = Lazy::new(|| {
     Localizer::new()
 });
 
-pub fn for_language(lang: String) -> Box<dyn Fn(&str) -> String> {
+pub type LocalizationFn = Box<dyn Fn(&str) -> String>;
+
+pub fn for_language(lang: String) -> LocalizationFn {
     let bundle = LOCALIZER.bundles.get(lang.as_str()).expect(&format!("Language '{}' not found", lang));
 
     Box::new(move |key: &str| {

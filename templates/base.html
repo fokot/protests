@@ -11,6 +11,9 @@
         <option value="en" {% if lang == "en" %}selected{% endif %}>English</option>
         <option value="sk" {% if lang == "sk" %}selected{% endif %}>Slovak</option>
     </select>
+    <a href="/login/generate-code/test@gmail.com">
+        <button type="button">Login</button>
+    </a>
     <script>
         document.getElementById('language-dropdown').addEventListener('change', function () {
             document.cookie = `language=${this.value}; path=/;`;

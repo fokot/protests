@@ -1,32 +1,38 @@
-use axum::Form;
-use axum::http::{HeaderMap, StatusCode};
+use axum::extract::{Path, State};
+use axum::http::StatusCode;
 use axum::response::{IntoResponse, Redirect};
 use axum_extra::extract::cookie::Cookie;
 use axum_extra::extract::SignedCookieJar;
-use sqlx::PgPool;
 use time::Duration;
-use crate::model::AuthData;
-use crate::repository;
+use uuid::Uuid;
+use crate::{repository, AppState};
 
-async fn login(
-    Form(data): Form<AuthData>,
-    db: PgPool,
+pub async fn login_generate_code(
+    Path(email): Path<String>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+
+    let code = Uuid::new_v4();
+    let id = repository::save_login_code(&state.db, email.as_str(), code.to_string().as_str()).await.unwrap();
+    format!("/login/code/{}/{}", id, code).to_string().into_response()
+}
+
+pub async fn login_with_code(
+    Path((id, code)): Path<(i32, String)>,
+    State(state): State<AppState>,
     jar: SignedCookieJar,
 ) -> impl IntoResponse {
-    let user = repository::login_user(&db, &data.username, &data.password)
-        .await
-        .map_err(|_| StatusCode::UNAUTHORIZED)?;
+    let res = repository::check_login_code(&state.db, id, &code, state.config.login_expiration_days).await;
 
-    let mut cookie = Cookie::new("user_id", user.id.to_string());
-    // FIXME TO SETTINGS
-    cookie.set_max_age(Duration::days(30));
-    let jar = jar.add(cookie);
+    match res {
+        Ok(Some(_)) => {
+            let mut cookie = Cookie::new("user_id", id.to_string());
+            cookie.set_max_age(Duration::days(30));
+            let jar = jar.add(cookie);
+            (jar, Redirect::to("/")).into_response()
+        },
+        Ok(None) => StatusCode::NOT_FOUND.into_response(),
+        Err(_) => StatusCode::NOT_FOUND.into_response(),
+    }
 
-    let mut headers = HeaderMap::new();
-    headers.insert("Set-Cookie", jar.to_header().unwrap());
-
-    Redirect::to("/").into_response();
-
-
-    Ok((headers, Html(format!("Welcome, {}!", user.username))))
 }

@@ -96,8 +96,8 @@ pub async fn create_protest(db: &PgPool, protest: &ProtestSave) -> Result<(), Er
     )
         .bind(&protest.title)
         .bind(&protest.description)
-        .bind(&protest.date)
-        .bind(&protest.time)
+        .bind(protest.date)
+        .bind(protest.time)
         .bind(&protest.location)
         .bind(user_id)
         .bind(region_id)
@@ -141,8 +141,8 @@ pub async fn edit_protest(db: &PgPool, protest: &Protest) -> Result<(), Error> {
     )
         .bind(&protest.title)
         .bind(&protest.description)
-        .bind(&protest.date)
-        .bind(&protest.time)
+        .bind(protest.date)
+        .bind(protest.time)
         .bind(&protest.location)
         //FIXME
         .bind(1)
@@ -153,7 +153,7 @@ pub async fn edit_protest(db: &PgPool, protest: &Protest) -> Result<(), Error> {
         r#"
         DELETE FROM protest_tag WHERE protest_id = $1
         "#
-    ).bind(&protest.id)
+    ).bind(protest.id)
         .execute(&mut *tx).await?;
 
     sqlx::query(
@@ -170,7 +170,7 @@ pub async fn edit_protest(db: &PgPool, protest: &Protest) -> Result<(), Error> {
         INSERT INTO protest_tag (protest_id, tag_id)
         SELECT $1, id FROM tag WHERE name = ANY($2)
         "#
-    ).bind(&protest.id)
+    ).bind(protest.id)
         .bind(&protest.tags)
         .execute(&mut *tx).await?;
 
@@ -185,9 +185,19 @@ pub async fn delete_protest(db: &PgPool, id: i32) -> Result<(), Error> {
     Ok(())
 }
 
-pub async fn login_user(db: &PgPool, user_id: &str, login_code: &str, expiration_days: i32) -> Result<Option<i32>, Error> {
+pub async fn save_login_code(db: &PgPool, email: &str, login_code: &str) -> Result<i32, Error> {
+    // FIXME when user does not exist => create one
     sqlx::query_scalar(
-        r#"SELECT id FROM users WHERE id = $1 AND login_code = $2 AND NOW() < (created_at + INTERVAL '$3 days')"#
+        r#"UPDATE users SET login_code = $1, login_code_created = NOW() WHERE email = $2 RETURNING id"#
+    )
+        .bind(login_code)
+        .bind(email)
+        .fetch_one(db).await
+}
+
+pub async fn check_login_code(db: &PgPool, user_id: i32, login_code: &str, expiration_days: i32) -> Result<Option<i32>, Error> {
+    sqlx::query_scalar(
+        r#"SELECT id FROM users WHERE id = $1 AND login_code = $2 AND NOW() < (login_code_created + INTERVAL '$3 days')"#
     )
         .bind(user_id)
         .bind(login_code)

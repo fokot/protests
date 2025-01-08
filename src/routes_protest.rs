@@ -5,8 +5,8 @@ use axum::http::StatusCode;
 use axum::response::{Html, IntoResponse, Redirect};
 use axum_extra::extract::SignedCookieJar;
 use crate::{repository, AppState};
-use crate::localizer::for_language;
-use crate::routes_utils::extract_language;
+use crate::localizer::{for_language, LocalizationFn};
+use crate::routes_utils::{extract_language, extract_user};
 use crate::model::{Protest, ProtestSave, ProtestSearch};
 
 #[derive(Template)]
@@ -14,8 +14,9 @@ use crate::model::{Protest, ProtestSave, ProtestSearch};
 struct ProtestsTemplate {
     protests: Vec<Protest>,
     tags: Vec<String>,
-    m: Box<dyn Fn(&str) -> String>,
-    lang: String
+    m: LocalizationFn,
+    lang: String,
+    user_id: String,
 }
 
 pub async fn list_protests(
@@ -28,9 +29,11 @@ pub async fn list_protests(
     let l = cookies.get("language").map(|c| c.value().to_string()).unwrap_or("sk".to_string());
     let lang = l.clone();
 
+    let user_id = extract_user(&cookies).map(|id| id.to_string()).unwrap_or("NOT LOGGED IN".to_string());
+
     let protests = repository::list_protests(&state.db, search).await.unwrap();
 
-    let template = ProtestsTemplate { protests, tags: Vec::new(), m: for_language(l), lang };
+    let template = ProtestsTemplate { protests, tags: Vec::new(), m: for_language(l), lang, user_id };
     Html(template.render().unwrap())
 }
 
@@ -38,7 +41,7 @@ pub async fn list_protests(
 #[template(path = "protest_add.html")]
 struct ProtestAddTemplate {
     lang: String,
-    m: Box<dyn Fn(&str) -> String>,
+    m: LocalizationFn,
 }
 
 pub async fn add_protest_form(cookies: SignedCookieJar) -> impl IntoResponse {
@@ -68,7 +71,7 @@ pub async fn add_protest(
 struct ProtestEditTemplate {
     protest: Protest,
     lang: String,
-    m: Box<dyn Fn(&str) -> String>,
+    m: LocalizationFn,
 }
 
 pub async fn edit_protest_form(

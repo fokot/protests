@@ -15,18 +15,21 @@ use serde::Deserialize;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use tower_http::services::ServeDir;
+use crate::routes_user::{login_generate_code, login_with_code};
 
 #[derive(Clone)]
 struct AppState {
     db: PgPool,
-    web_key: Key
+    web_key: Key,
+    config: Config,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 struct Config {
     port: u16,
     db_url: String,
     web_key: String,
+    login_expiration_days: i32,
 }
 
 fn load_config() -> Config {
@@ -62,8 +65,8 @@ async fn main() {
     let config = load_config();
     let pool = create_db_pool(&config).await;
     let web_key = Key::from(config.web_key.as_bytes());
-    let state = AppState { db: pool.clone(), web_key };
-    sqlx::migrate!().run(&pool).await.unwrap();
+    let state = AppState { db: pool.clone(), web_key, config: config.clone() };
+    // sqlx::migrate!().run(&pool).await.unwrap();
 
     let app = Router::new()
         .nest_service("/assets", ServeDir::new("assets"))
@@ -75,6 +78,8 @@ async fn main() {
             get(edit_protest_form).post(edit_protest),
         )
         .route("/protests/{id}/delete", get(delete_protest))
+        .route("/login/generate-code/{email}", get(login_generate_code))
+        .route("/login/code/{id}/{code}", get(login_with_code))
         // server static files from assets directory
         // .nest("/assets", axum::service::get(axum::service::files::Files::new("assets")));
         .with_state(state);

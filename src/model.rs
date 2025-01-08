@@ -25,7 +25,7 @@ where
     D: Deserializer<'de>,
 {
     let s: Option<String> = Option::deserialize(deserializer)?;
-    Ok(s.filter(|s| !s.trim().is_empty()))
+    Ok(s)
 }
 
 #[derive(Clone, Debug, Deserialize, FromRow)]
@@ -55,18 +55,14 @@ pub struct ProtestSave {
     pub location: String,
 }
 
+// FIXME empty strings
 #[derive(Deserialize)]
 pub struct ProtestSearch {
-    #[serde(deserialize_with = "empty_string_as_none")]
+    // #[serde(deserialize_with = "empty_string_as_none")]
     pub town: Option<String>,
-    #[serde(deserialize_with = "empty_string_as_none")]
+    // #[serde(deserialize_with = "empty_string_as_none")]
     pub date_from: Option<String>,
     pub tags: Option<Vec<String>>,
-    #[serde(deserialize_with = "empty_string_as_none")]
+    // #[serde(deserialize_with = "empty_string_as_none")]
     pub created_by: Option<String>,
-}
-
-#[derive(Deserialize)]
-pub struct AuthData {
-    pub user_id: i32,
 }
