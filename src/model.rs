@@ -1,7 +1,9 @@
-use serde::{Deserialize,Deserializer};
+use std::ops::Not;
+use serde::{Deserialize, Deserializer};
 use sqlx::FromRow;
 use time::{Date, Time};
 use time::macros::format_description;
+use serde_with::{serde_as, NoneAsEmptyString};
 
 fn deserialize_tags<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
 where
@@ -24,8 +26,8 @@ fn empty_string_as_none<'de, D>(deserializer: D) -> Result<Option<String>, D::Er
 where
     D: Deserializer<'de>,
 {
-    let s: Option<String> = Option::deserialize(deserializer)?;
-    Ok(s)
+    let d: Option<String> = Option::deserialize(deserializer)?;
+    Ok(d.filter(|s| s.trim().is_empty().not()))
 }
 
 #[derive(Clone, Debug, Deserialize, FromRow)]
@@ -55,14 +57,57 @@ pub struct ProtestSave {
     pub location: String,
 }
 
-// FIXME empty strings
+
+#[serde_as]
 #[derive(Deserialize)]
 pub struct ProtestSearch {
-    // #[serde(deserialize_with = "empty_string_as_none")]
+    #[serde_as(as = "NoneAsEmptyString")]
+    #[serde(default)]
     pub town: Option<String>,
-    // #[serde(deserialize_with = "empty_string_as_none")]
+    #[serde_as(as = "NoneAsEmptyString")]
+    #[serde(default)]
     pub date_from: Option<String>,
     pub tags: Option<Vec<String>>,
-    // #[serde(deserialize_with = "empty_string_as_none")]
+    #[serde_as(as = "NoneAsEmptyString")]
+    #[serde(default)]
     pub created_by: Option<String>,
+}
+
+// test method to deserialize the ProtestSearch struct
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn deserialize_protest_search() {
+        let json = r#"{"town":"Bratislava","date_from":"2021-01-01","tags":["tag1","tag2"],"created_by":"user"}"#;
+        let search: ProtestSearch = serde_json::from_str(json).unwrap();
+
+        assert_eq!(search.town, Some("Bratislava".to_string()));
+        assert_eq!(search.date_from, Some("2021-01-01".to_string()));
+        assert_eq!(search.tags, Some(vec!["tag1".to_string(), "tag2".to_string()]));
+        assert_eq!(search.created_by, Some("user".to_string()));
+    }
+
+    #[test]
+    fn deserialize_protest_search_empty_strings() {
+        let json = r#"{"town":"","date_from":"","tags":[],"created_by":""}"#;
+        let search: ProtestSearch = serde_json::from_str(json).unwrap();
+
+        assert_eq!(search.town, None);
+        assert_eq!(search.date_from, None);
+        assert_eq!(search.tags, Some(vec![]));
+        assert_eq!(search.created_by, None);
+    }
+
+    #[test]
+    fn deserialize_protest_search_missing_fields() {
+        let json = r#"{}"#;
+        let search: ProtestSearch = serde_json::from_str(json).unwrap();
+
+        assert_eq!(search.town, None);
+        assert_eq!(search.date_from, None);
+        assert_eq!(search.tags, None);
+        assert_eq!(search.created_by, None);
+    }
 }
