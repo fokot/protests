@@ -1,12 +1,13 @@
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
-    email TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
     name TEXT,
     login_code TEXT,
     login_code_created TIMESTAMP,
     created TIMESTAMP NOT NULL DEFAULT now()
 );
 
+ALTER TABLE users
 CREATE TABLE IF NOT EXISTS region (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
