@@ -11,9 +11,45 @@
         <option value="en" {% if lang == "en" %}selected{% endif %}>English</option>
         <option value="sk" {% if lang == "sk" %}selected{% endif %}>Slovak</option>
     </select>
-    <a href="/login/generate-code/test@gmail.com">
-        <button type="button">Login</button>
-    </a>
+    <button type="button" onclick="document.getElementById('login-form').style.display = 'block'">{{ m("login") }}</button>
+    <form id="login-form" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); text-align: center;">
+        <div style="margin: 0;">
+        <!-- Login Form -->
+            <input type="text" name="email" placeholder='{{ m("email") }}' style="display: block; margin: 10px auto; padding: 10px; width: 80%; font-size: 16px;">
+            <button type="submit" style="display: block; margin: 10px auto; padding: 10px; width: 80%; font-size: 16px; background-color: #007BFF; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                Login
+            </button>
+            <script>
+                document.getElementById('login-form').addEventListener('submit', async (event) => {
+                    event.preventDefault();
+                    const data = new URLSearchParams();
+                    for (const pair of new FormData(document.getElementById('login-form'))) {
+                        data.append(pair[0], pair[1]);
+                    }
+                    const response = await fetch('/login/generate-code', {
+                        method: 'POST',
+                        body: data,
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        }
+                    });
+
+                    const protocol = window.location.protocol;
+                    const host = window.location.hostname;
+                    const port = window.location.port;
+                    const path = await response.text();
+
+                    const link = `${protocol}//${host}${port ? `:${port}` : ''}${path}`;
+                    document.getElementById('login-form').style.display = 'none';
+                    const loginLink = document.getElementById('login-link');
+                    loginLink.innerHTML = `Login with link: <a href="${link}">${link}</a>`;
+                    loginLink.style.display = 'block';
+                });
+            </script>
+        </div>
+    </form>
+    <div id="login-link" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); text-align: center;">
+    </div>
     <script>
         document.getElementById('language-dropdown').addEventListener('change', (event) =>
             fetch(`change-language/${event.target.value}`).then(() => window.location.reload())

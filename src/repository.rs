@@ -186,12 +186,17 @@ pub async fn delete_protest(db: &PgPool, id: i32) -> Result<(), Error> {
 }
 
 pub async fn save_login_code(db: &PgPool, email: &str, login_code: &str) -> Result<i32, Error> {
-    // FIXME when user does not exist => create one
     sqlx::query_scalar(
-        r#"UPDATE users SET login_code = $1, login_code_created = NOW() WHERE email = $2 RETURNING id"#
+        r#"INSERT INTO users (email, login_code, login_code_created)
+            VALUES ($1, $2, NOW())
+            ON CONFLICT (email)
+            DO UPDATE SET
+                login_code = EXCLUDED.login_code,
+                login_code_created = EXCLUDED.login_code_created
+            RETURNING id;"#
     )
-        .bind(login_code)
         .bind(email)
+        .bind(login_code)
         .fetch_one(db).await
 }
 

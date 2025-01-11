@@ -10,6 +10,7 @@ use crate::routes_protest::{
 };
 use axum::{routing::get, Router};
 use axum::extract::FromRef;
+use axum::routing::post;
 use axum_extra::extract::cookie::Key;
 use serde::Deserialize;
 use sqlx::postgres::PgPoolOptions;
@@ -78,7 +79,7 @@ async fn main() {
             get(edit_protest_form).post(edit_protest),
         )
         .route("/protests/{id}/delete", get(delete_protest))
-        .route("/login/generate-code/{email}", get(login_generate_code))
+        .route("/login/generate-code", post(login_generate_code))
         .route("/login/code/{id}/{code}", get(login_with_code))
         .route("/change-language/{code}", get(change_language))
         // server static files from assets directory

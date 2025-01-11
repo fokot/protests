@@ -1,4 +1,5 @@
 use axum::extract::{Path, State};
+use axum::Form;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Redirect};
 use axum_extra::extract::cookie::Cookie;
@@ -6,14 +7,15 @@ use axum_extra::extract::SignedCookieJar;
 use time::Duration;
 use uuid::Uuid;
 use crate::{repository, AppState};
+use crate::model::LoginForm;
 
 pub async fn login_generate_code(
-    Path(email): Path<String>,
     State(state): State<AppState>,
+    Form(login): Form<LoginForm>,
 ) -> impl IntoResponse {
 
     let code = Uuid::new_v4();
-    let id = repository::save_login_code(&state.db, email.as_str(), code.to_string().as_str()).await.unwrap();
+    let id = repository::save_login_code(&state.db, login.email.as_str(), code.to_string().as_str()).await.unwrap();
     format!("/login/code/{}/{}", id, code).to_string().into_response()
 }
 
@@ -27,7 +29,8 @@ pub async fn login_with_code(
     match res {
         Ok(Some(_)) => {
             let mut cookie = Cookie::new("user_id", id.to_string());
-            cookie.set_max_age(Duration::days(30));
+            cookie.set_max_age(Duration::days(state.config.login_expiration_days as i64));
+            cookie.set_path("/");
             let jar = jar.add(cookie);
             (jar, Redirect::to("/")).into_response()
         },

@@ -23,3 +23,5 @@ edit_protest = Uprav protest
 
 save = Ulož
 delete = Zmaž
+email = Email
+login = Prihlásiť sa

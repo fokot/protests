@@ -23,3 +23,5 @@ edit_protest = Edit protest
 
 save = Save
 delete = Delete
+email = Email
+login = Login

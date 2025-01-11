@@ -64,6 +64,12 @@ pub struct ProtestSearch {
     pub created_by: Option<String>,
 }
 
+#[derive(Deserialize)]
+pub struct LoginForm {
+    pub email: String,
+}
+
+
 // test method to deserialize the ProtestSearch struct
 #[cfg(test)]
 mod test {
