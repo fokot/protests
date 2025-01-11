@@ -5,9 +5,7 @@ mod routes_utils;
 mod model;
 mod routes_user;
 
-use crate::routes_protest::{
-    add_protest, add_protest_form, delete_protest, edit_protest, edit_protest_form, list_protests,
-};
+use crate::routes_protest::{add_protest, add_protest_form, delete_protest, edit_protest, edit_protest_form, list_protests, view_protest};
 use axum::{routing::get, Router};
 use axum::extract::FromRef;
 use axum::routing::post;
@@ -78,6 +76,7 @@ async fn main() {
             "/protests/{id}/edit",
             get(edit_protest_form).post(edit_protest),
         )
+        .route("/protests/{id}", get(view_protest))
         .route("/protests/{id}/delete", get(delete_protest))
         .route("/login/generate-code", post(login_generate_code))
         .route("/login/code/{id}/{code}", get(login_with_code))

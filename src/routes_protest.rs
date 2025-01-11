@@ -16,7 +16,7 @@ struct ProtestsTemplate {
     tags: Vec<String>,
     m: LocalizationFn,
     lang: String,
-    user_id: String,
+    user_id: i32,
 }
 
 pub async fn list_protests(
@@ -29,12 +29,42 @@ pub async fn list_protests(
     let l = cookies.get("language").map(|c| c.value().to_string()).unwrap_or("sk".to_string());
     let lang = l.clone();
 
-    let user_id = extract_user(&cookies).map(|id| id.to_string()).unwrap_or("NOT LOGGED IN".to_string());
+    let user_id = extract_user(&cookies).unwrap();
 
     let protests = repository::list_protests(&state.db, search).await.unwrap();
 
     let template = ProtestsTemplate { protests, tags: Vec::new(), m: for_language(l), lang, user_id };
     Html(template.render().unwrap())
+}
+
+#[derive(Template)]
+#[template(path = "protest_view.html")]
+struct ProtestViewTemplate {
+    protest: Protest,
+    lang: String,
+    m: LocalizationFn,
+}
+
+pub async fn view_protest(
+    State(state): State<AppState>,
+    Path(protest_id): Path<i32>,
+    cookies: SignedCookieJar,
+) -> impl IntoResponse {
+    // Fetch the protest from the database
+    let protest = repository::get_protest(&state.db, protest_id).await;
+
+    match protest {
+        Ok(protest) => {
+            let (lang, m) = extract_language(&cookies);
+            let template = ProtestViewTemplate { protest, lang, m };
+            Html(template.render().unwrap()).into_response()
+        }
+        Err(err) => (
+            StatusCode::NOT_FOUND,
+            format!("Protest not found {}", err.to_string()).to_string(),
+        )
+            .into_response(),
+    }
 }
 
 #[derive(Template)]
@@ -52,9 +82,12 @@ pub async fn add_protest_form(cookies: SignedCookieJar) -> impl IntoResponse {
 
 pub async fn add_protest(
     State(state): State<AppState>,
+    cookies: SignedCookieJar,
     Form(protest): Form<ProtestSave>,
 ) -> impl IntoResponse {
-    let result = repository::create_protest(&state.db, &protest).await;
+
+    let user_id = extract_user(&cookies).unwrap();
+    let result = repository::create_protest(&state.db, &protest, user_id).await;
 
     match result {
         Ok(_) => Redirect::to("/protests").into_response(),

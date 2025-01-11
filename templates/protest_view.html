@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}{{ protest.title }}{% endblock %}
+
+{% block content %}
+<div>
+    <label for="description">{{ m("description") }}:</label>
+    <div id="description">{{ protest.description }}</div><br>
+
+    <label for="tags">{{ m("tags") }}:</label>
+    <div id="tags">{{ protest.tags|join(", ") }}</div><br>
+
+    <label for="date">{{ m("date") }}:</label>
+    <div id="date">{{ protest.date }}</div><br>
+
+    <label for="time">{{ m("time") }}:</label>
+    <div id="time">{{ protest.time }}</div><br>
+
+    <label for="location">{{ m("location") }}:</label>
+    <div id="location">{{ protest.location }}</div><br>
+</div>
+{% endblock %}

@@ -25,3 +25,4 @@ save = Save
 delete = Delete
 email = Email
 login = Login
+edit = Edit

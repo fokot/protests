@@ -35,9 +35,13 @@ pub async fn list_protests(db: &PgPool, search: ProtestSearch) -> Result<Vec<Pro
             r2.name AS region,
             p.protest_date AS date,
             p.protest_time AS time,
-            p.location
+            p.location,
+            p.user_id,
+            COALESCE(u.name, u.email) as user_name
         FROM
             protest p
+                JOIN
+            users u ON p.user_id = u.id
                 LEFT JOIN
             region r ON p.region_id = r.id
                 LEFT JOIN
@@ -48,7 +52,7 @@ pub async fn list_protests(db: &PgPool, search: ProtestSearch) -> Result<Vec<Pro
             tag t ON pt.tag_id = t.id
         WHERE {}
         GROUP BY
-            p.id, r.name, r2.name"#,
+            p.id, r.name, r2.name, user_name"#,
         where_expression
     );
 
@@ -66,9 +70,13 @@ pub async fn get_protest(db: &PgPool, id: i32) -> Result<Protest, Error> {
             r2.name AS region,
             p.protest_date AS date,
             p.protest_time AS time,
-            p.location
+            p.location,
+            p.user_id,
+            COALESCE(u.name, u.email) as user_name
         FROM
             protest p
+                JOIN
+            users u ON p.user_id = u.id
                 LEFT JOIN
             region r ON p.region_id = r.id
                 LEFT JOIN
@@ -77,17 +85,16 @@ pub async fn get_protest(db: &PgPool, id: i32) -> Result<Protest, Error> {
             protest_tag pt ON p.id = pt.protest_id
                 LEFT JOIN
             tag t ON pt.tag_id = t.id
-        WHERE p.id = $1
+        WHERE p.id = $1 AND p.deleted IS NULL
         GROUP BY
-            p.id, r.name, r2.name"#
+            p.id, r.name, r2.name, user_name"#
     ).bind(id).fetch_one(db).await
 }
 
-pub async fn create_protest(db: &PgPool, protest: &ProtestSave) -> Result<(), Error> {
+pub async fn create_protest(db: &PgPool, protest: &ProtestSave, user_id: i32) -> Result<(), Error> {
     let mut tx = db.begin().await?;
 
     //FIXME
-    let user_id: i32 = 1;
     let region_id: i32 = 1;
 
     let protest_id: (i32,) = sqlx::query_as(

@@ -25,3 +25,4 @@ save = Ulož
 delete = Zmaž
 email = Email
 login = Prihlásiť sa
+edit = Upraviť

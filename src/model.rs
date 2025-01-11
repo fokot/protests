@@ -34,6 +34,8 @@ pub struct Protest {
     #[serde(deserialize_with = "deserialize_time")]
     pub time: Time,
     pub location: String,
+    pub user_id: i32,
+    pub user_name: String,
 }
 
 #[derive(Clone, Debug, Deserialize, FromRow)]

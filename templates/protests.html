@@ -33,8 +33,13 @@
         {% for protest in protests %}
         <aside>
             <h2>
-                <a href="/protests/{{ protest.id }}/edit">{{ protest.title }}</a>
+                <a href="/protests/{{ protest.id }}">{{ protest.title }}</a>
             </h2>
+            {% if protest.user_id == user_id %}
+            <a href="/protests/{{ protest.id }}/edit">
+                <button type="button">{{ m("edit") }}</button>
+            </a>
+            {% endif %}
             <p>{{ protest.description }}</p>
             <ul>
                 {% for tag in protest.tags %}
