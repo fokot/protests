@@ -15,10 +15,9 @@
         <button type="button">Login</button>
     </a>
     <script>
-        document.getElementById('language-dropdown').addEventListener('change', function () {
-            document.cookie = `language=${this.value}; path=/;`;
-            location.reload();
-        });
+        document.getElementById('language-dropdown').addEventListener('change', (event) =>
+            fetch(`change-language/${event.target.value}`).then(() => window.location.reload())
+        )
     </script>
 
     <div id="header">

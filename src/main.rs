@@ -15,7 +15,7 @@ use serde::Deserialize;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use tower_http::services::ServeDir;
-use crate::routes_user::{login_generate_code, login_with_code};
+use crate::routes_user::{change_language, login_generate_code, login_with_code};
 
 #[derive(Clone)]
 struct AppState {
@@ -80,6 +80,7 @@ async fn main() {
         .route("/protests/{id}/delete", get(delete_protest))
         .route("/login/generate-code/{email}", get(login_generate_code))
         .route("/login/code/{id}/{code}", get(login_with_code))
+        .route("/change-language/{code}", get(change_language))
         // server static files from assets directory
         // .nest("/assets", axum::service::get(axum::service::files::Files::new("assets")));
         .with_state(state);

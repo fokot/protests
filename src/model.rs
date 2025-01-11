@@ -1,4 +1,3 @@
-use std::ops::Not;
 use serde::{Deserialize, Deserializer};
 use sqlx::FromRow;
 use time::{Date, Time};
@@ -20,14 +19,6 @@ where
     let s = String::deserialize(deserializer)?;
     let format = format_description!("[hour]:[minute]");
     Time::parse(&s, &format).map_err(serde::de::Error::custom)
-}
-
-fn empty_string_as_none<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let d: Option<String> = Option::deserialize(deserializer)?;
-    Ok(d.filter(|s| s.trim().is_empty().not()))
 }
 
 #[derive(Clone, Debug, Deserialize, FromRow)]

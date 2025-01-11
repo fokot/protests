@@ -34,5 +34,15 @@ pub async fn login_with_code(
         Ok(None) => StatusCode::NOT_FOUND.into_response(),
         Err(_) => StatusCode::NOT_FOUND.into_response(),
     }
+}
 
+pub async fn change_language(
+    Path(code): Path<String>,
+    jar: SignedCookieJar,
+) -> impl IntoResponse {
+    let mut cookie = Cookie::new("language", code.to_string());
+    cookie.set_max_age(Duration::days(30));
+    cookie.set_path("/");
+    let jar = jar.add(cookie);
+    jar.into_response()
 }
