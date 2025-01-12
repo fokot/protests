@@ -4,6 +4,7 @@ mod routes_protest;
 mod routes_utils;
 mod model;
 mod routes_user;
+mod routes_image;
 
 use crate::routes_protest::{add_protest, add_protest_form, delete_protest, edit_protest, edit_protest_form, list_protests, view_protest};
 use axum::{routing::get, Router};
@@ -14,6 +15,7 @@ use serde::Deserialize;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use tower_http::services::ServeDir;
+use crate::routes_image::upload_image_disk;
 use crate::routes_user::{change_language, login_generate_code, login_with_code};
 
 #[derive(Clone)]
@@ -29,6 +31,7 @@ struct Config {
     db_url: String,
     web_key: String,
     login_expiration_days: i32,
+    image_upload_path: String
 }
 
 fn load_config() -> Config {
@@ -65,10 +68,11 @@ async fn main() {
     let pool = create_db_pool(&config).await;
     let web_key = Key::from(config.web_key.as_bytes());
     let state = AppState { db: pool.clone(), web_key, config: config.clone() };
-    // sqlx::migrate!().run(&pool).await.unwrap();
+    sqlx::migrate!().run(&pool).await.unwrap();
 
     let app = Router::new()
         .nest_service("/assets", ServeDir::new("assets"))
+        .nest_service("/images", ServeDir::new(config.image_upload_path))
         .route("/", get(list_protests))
         .route("/protests", get(list_protests))
         .route("/protests/add", get(add_protest_form).post(add_protest))
@@ -81,6 +85,7 @@ async fn main() {
         .route("/login/generate-code", post(login_generate_code))
         .route("/login/code/{id}/{code}", get(login_with_code))
         .route("/change-language/{code}", get(change_language))
+        .route("/image/upload", post(upload_image_disk))
         // server static files from assets directory
         // .nest("/assets", axum::service::get(axum::service::files::Files::new("assets")));
         .with_state(state);

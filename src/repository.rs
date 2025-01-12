@@ -216,3 +216,12 @@ pub async fn check_login_code(db: &PgPool, user_id: i32, login_code: &str, expir
         .bind(expiration_days)
         .fetch_optional(db).await
 }
+
+pub async fn save_image(db: &PgPool, image_name: &str, user_id: i32) -> Result<i32, Error> {
+    sqlx::query_scalar(
+        r#"INSERT INTO image (name, user_id) VALUES ($1, $2) RETURNING id"#
+    )
+        .bind(image_name)
+        .bind(user_id)
+        .fetch_one(db).await
+}

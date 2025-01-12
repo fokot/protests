@@ -1,18 +1,24 @@
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
-    email TEXT NOT NULL UNIQUE,
+    email TEXT UNIQUE NOT NULL,
     name TEXT,
     login_code TEXT,
     login_code_created TIMESTAMP,
     created TIMESTAMP NOT NULL DEFAULT now()
 );
 
-ALTER TABLE users
 CREATE TABLE IF NOT EXISTS region (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     parent_id INTEGER,
     FOREIGN KEY (parent_id) REFERENCES region(id)
+);
+
+CREATE TABLE image (
+    id SERIAL PRIMARY KEY,
+    name TEXT UNIQUE NOT NULL,
+    user_id INTEGER NOT NULL,
+    created TIMESTAMP NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS protest (
@@ -27,13 +33,15 @@ CREATE TABLE IF NOT EXISTS protest (
     created TIMESTAMP NOT NULL DEFAULT now(),
     updated TIMESTAMP NOT NULL DEFAULT now(),
     deleted TIMESTAMP,
+    image_id INTEGER,
     FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (region_id) REFERENCES region(id)
+    FOREIGN KEY (region_id) REFERENCES region(id),
+    FOREIGN KEY (image_id) REFERENCES image(id)
 );
 
 CREATE TABLE IF NOT EXISTS tag (
     id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL UNIQUE
+    name TEXT UNIQUE NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS protest_tag (

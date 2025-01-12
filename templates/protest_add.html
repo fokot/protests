@@ -3,6 +3,65 @@
 {% block title %}{{ m("add_protest") }}{% endblock %}
 
 {% block content %}
+<form id="image-upload-form" enctype="multipart/form-data">
+    <div class="image-preview" id="imagePreview">
+        <img id="preview-image" alt="Image Preview">
+    </div>
+    <input id="file-input" type="file" name="image">
+    <button id="upload-button" type="submit">Upload</button>
+    <script>
+        const fileInput = document.getElementById('file-input');
+        const imagePreview = document.getElementById('image-preview');
+        const previewImage = document.getElementById('preview-image');
+
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewImage.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                imagePreview.style.display = 'none';
+                previewImage.src = '';
+            }
+        });
+
+        document.getElementById("upload-button").addEventListener("click", async () => {
+            const input = document.getElementById("imageInput");
+            if (!input.files[0]) {
+                alert("Please select a file first!");
+                return;
+            }
+
+            const formData = new FormData();
+            for (const pair of new FormData(document.getElementById('image-upload-form'))) {
+                formData.append(pair[0], pair[1]);
+            }
+
+            try {
+                const response = await fetch("/image/upload", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error("Upload failed: " + response.statusText);
+                }
+
+                const data = await response.json();
+                document.getElementById("response").innerText = `Image uploaded successfully! ID: ${data.id}, File Name: ${data.filename}`;
+            } catch (error) {
+                console.error(error);
+                document.getElementById("response").innerText = "An error occurred during upload.";
+            }
+        });
+    </script>
+</form>
+
 <form action="/protests/add" method="post">
 
     <label for="title">{{ m("title") }}:</label>
