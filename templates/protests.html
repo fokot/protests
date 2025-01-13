@@ -32,6 +32,9 @@
     <section class="box-border bg-green-400">
         {% for protest in protests %}
         <aside>
+            {% if protest.image_name.is_some() %}
+            <img src="/images/{{ protest.image_name.clone().unwrap() }}" alt="{{ protest.title }}" style="width: 100px;">
+            {% endif %}
             <h2>
                 <a href="/protests/{{ protest.id }}">{{ protest.title }}</a>
             </h2>

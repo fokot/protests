@@ -3,18 +3,19 @@
 {% block title %}{{ m("add_protest") }}{% endblock %}
 
 {% block content %}
-<form id="image-upload-form" enctype="multipart/form-data">
-    <div class="image-preview" id="imagePreview">
+<form id="image-upload-form">
+    <div class="image-preview" id="image-preview">
         <img id="preview-image" alt="Image Preview">
     </div>
-    <input id="file-input" type="file" name="image">
+    <input id="image-input" type="file" name="image">
     <button id="upload-button" type="submit">Upload</button>
+    <div id="response"></div>
     <script>
-        const fileInput = document.getElementById('file-input');
+        const imageInput = document.getElementById('image-input');
         const imagePreview = document.getElementById('image-preview');
         const previewImage = document.getElementById('preview-image');
 
-        fileInput.addEventListener('change', (event) => {
+        imageInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
 
             if (file && file.type.startsWith('image/')) {
@@ -30,17 +31,15 @@
             }
         });
 
-        document.getElementById("upload-button").addEventListener("click", async () => {
-            const input = document.getElementById("imageInput");
-            if (!input.files[0]) {
+        document.getElementById("upload-button").addEventListener("click", async (event) => {
+            event.preventDefault();
+            if (!imageInput.files[0]) {
                 alert("Please select a file first!");
                 return;
             }
 
             const formData = new FormData();
-            for (const pair of new FormData(document.getElementById('image-upload-form'))) {
-                formData.append(pair[0], pair[1]);
-            }
+            formData.append("image", imageInput.files[0]);
 
             try {
                 const response = await fetch("/image/upload", {
@@ -54,6 +53,7 @@
 
                 const data = await response.json();
                 document.getElementById("response").innerText = `Image uploaded successfully! ID: ${data.id}, File Name: ${data.filename}`;
+                document.getElementById('image-id').value = data.id;
             } catch (error) {
                 console.error(error);
                 document.getElementById("response").innerText = "An error occurred during upload.";
@@ -63,6 +63,8 @@
 </form>
 
 <form action="/protests/add" method="post">
+
+    <input type="hidden" id="image-id" name="image_id" >
 
     <label for="title">{{ m("title") }}:</label>
     <input type="text" id="title" name="title" required><br>

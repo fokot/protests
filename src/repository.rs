@@ -37,7 +37,8 @@ pub async fn list_protests(db: &PgPool, search: ProtestSearch) -> Result<Vec<Pro
             p.protest_time AS time,
             p.location,
             p.user_id,
-            COALESCE(u.name, u.email) as user_name
+            COALESCE(u.name, u.email) as user_name,
+            i.name as image_name
         FROM
             protest p
                 JOIN
@@ -50,9 +51,11 @@ pub async fn list_protests(db: &PgPool, search: ProtestSearch) -> Result<Vec<Pro
             protest_tag pt ON p.id = pt.protest_id
                 LEFT JOIN
             tag t ON pt.tag_id = t.id
+                LEFT JOIN
+            image i ON p.image_id = i.id
         WHERE {}
         GROUP BY
-            p.id, r.name, r2.name, user_name"#,
+            p.id, r.name, r2.name, user_name, image_name"#,
         where_expression
     );
 
@@ -72,7 +75,8 @@ pub async fn get_protest(db: &PgPool, id: i32) -> Result<Protest, Error> {
             p.protest_time AS time,
             p.location,
             p.user_id,
-            COALESCE(u.name, u.email) as user_name
+            COALESCE(u.name, u.email) as user_name,
+            i.name as image_name
         FROM
             protest p
                 JOIN
@@ -85,9 +89,11 @@ pub async fn get_protest(db: &PgPool, id: i32) -> Result<Protest, Error> {
             protest_tag pt ON p.id = pt.protest_id
                 LEFT JOIN
             tag t ON pt.tag_id = t.id
+                LEFT JOIN
+            image i ON p.image_id = i.id
         WHERE p.id = $1 AND p.deleted IS NULL
         GROUP BY
-            p.id, r.name, r2.name, user_name"#
+            p.id, r.name, r2.name, user_name, image_name"#
     ).bind(id).fetch_one(db).await
 }
 
@@ -98,8 +104,8 @@ pub async fn create_protest(db: &PgPool, protest: &ProtestSave, user_id: i32) ->
     let region_id: i32 = 1;
 
     let protest_id: (i32,) = sqlx::query_as(
-        r#"INSERT INTO protest (title, description, protest_date, protest_time, location, user_id, region_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id"#
+        r#"INSERT INTO protest (title, description, protest_date, protest_time, location, user_id, region_id, image_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id"#
     )
         .bind(&protest.title)
         .bind(&protest.description)
@@ -108,6 +114,7 @@ pub async fn create_protest(db: &PgPool, protest: &ProtestSave, user_id: i32) ->
         .bind(&protest.location)
         .bind(user_id)
         .bind(region_id)
+        .bind(protest.image_id)
         .fetch_one(&mut *tx).await?;
 
     sqlx::query(

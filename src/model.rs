@@ -36,8 +36,10 @@ pub struct Protest {
     pub location: String,
     pub user_id: i32,
     pub user_name: String,
+    pub image_name: Option<String>,
 }
 
+#[serde_as]
 #[derive(Clone, Debug, Deserialize, FromRow)]
 pub struct ProtestSave {
     pub title: String,
@@ -48,6 +50,9 @@ pub struct ProtestSave {
     #[serde(deserialize_with = "deserialize_time")]
     pub time: Time,
     pub location: String,
+    #[serde_as(as = "NoneAsEmptyString")]
+    #[serde(default)]
+    pub image_id: Option<i32>,
 }
 
 
