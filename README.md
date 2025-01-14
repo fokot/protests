@@ -50,7 +50,7 @@ cargo watch -x run
 
 To build `tailwindcss` have `npm` v22+ installed and run:
 ```
-nmp run watch
+npm run watch
 ```
 It is needed only when you introduce new tailwind css class to html template.
 If you change only rust code or don't use new css classes it is fine not to run it.

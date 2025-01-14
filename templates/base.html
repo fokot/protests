@@ -1,16 +1,41 @@
+{%- import "macros.html" as macros -%}
 <!DOCTYPE html>
 <html>
 <head>
-<!--    <link rel="stylesheet" href="/assets/main.css">-->
+    <link rel="stylesheet" href="/assets/main.css">
     <!-- Simple styles - fix later -->
-    <link rel="stylesheet" href="https://unpkg.com/mvp.css">
+<!--    <link rel="stylesheet" href="https://unpkg.com/mvp.css">-->
     <title>{% block title %}Title{% endblock %}</title>
 </head>
 <body>
-    <select id="language-dropdown">
-        <option value="en" {% if lang == "en" %}selected{% endif %}>English</option>
-        <option value="sk" {% if lang == "sk" %}selected{% endif %}>Slovak</option>
-    </select>
+    <div class="navbar bg-base-300 rounded-box">
+        <div class="flex-1 px-2 lg:flex-none">
+            <a class="text-lg font-bold" style="font-size: 40px">{{m("protests")}} &#127480; &#127480; 🇸🇰</a>
+        </div>
+        <div class="flex flex-1 justify-end px-2">
+            <div class="flex items-stretch">
+                <a class="btn btn-ghost rounded-btn">Button</a>
+                <div class="dropdown dropdown-end">
+                    <div tabindex="0" role="button" class="btn btn-ghost rounded-btn">Dropdown</div>
+                    <ul
+                            tabindex="0"
+                            class="menu dropdown-content bg-base-100 rounded-box z-[1] mt-4 w-52 p-2 shadow">
+                        <li><a>Item 1</a></li>
+                        <li><a>Item 2</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <script>
+            document.getElementById('language-dropdown').addEventListener('change', (event) =>
+                fetch(`change-language/${event.target.value}`).then(() => window.location.reload())
+            )
+        </script>
+        {% call macros::theme_selector() %}
+    </div>
+
+
+
     <button type="button" onclick="document.getElementById('login-form').style.display = 'block'">{{ m("login") }}</button>
     <form id="login-form" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); text-align: center;">
         <div style="margin: 0;">
@@ -50,11 +75,7 @@
     </form>
     <div id="login-link" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); text-align: center;">
     </div>
-    <script>
-        document.getElementById('language-dropdown').addEventListener('change', (event) =>
-            fetch(`change-language/${event.target.value}`).then(() => window.location.reload())
-        )
-    </script>
+
 
     <div id="header">
         <h1>{% block title %}Title{% endblock %}</h1>
