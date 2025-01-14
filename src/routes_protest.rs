@@ -16,7 +16,7 @@ struct ProtestsTemplate {
     tags: Vec<String>,
     m: LocalizationFn,
     lang: String,
-    user_id: i32,
+    user_id: Option<i32>,
 }
 
 pub async fn list_protests(
@@ -29,7 +29,7 @@ pub async fn list_protests(
     let l = cookies.get("language").map(|c| c.value().to_string()).unwrap_or("sk".to_string());
     let lang = l.clone();
 
-    let user_id = extract_user(&cookies).unwrap();
+    let user_id = extract_user(&cookies);
 
     let protests = repository::list_protests(&state.db, search).await.unwrap();
 

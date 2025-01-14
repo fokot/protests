@@ -7,7 +7,9 @@
         <button type="button">{{ m("add_protest") }}</button>
     </a>
 
-    <h1>User is: {{ user_id }}</h1>
+    {% if user_id.is_some() %}
+    <h1>User is: {{ user_id.unwrap() }}</h1>
+    {% endif %}
 
     <form method="get" action="/protests">
         <label for="town">{{ m("town") }}:</label>
@@ -38,7 +40,8 @@
             <h2>
                 <a href="/protests/{{ protest.id }}">{{ protest.title }}</a>
             </h2>
-            {% if protest.user_id == user_id %}
+            <!-- Fix and use is_some_and(..) -->
+            {% if user_id.unwrap_or_default() == protest.user_id %}
             <a href="/protests/{{ protest.id }}/edit">
                 <button type="button">{{ m("edit") }}</button>
             </a>
