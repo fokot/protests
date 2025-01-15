@@ -2055,6 +2055,10 @@ html {
   margin: 0.25rem;
 }
 
+.mt-8 {
+  margin-top: 2rem;
+}
+
 .box-border {
   box-sizing: border-box;
 }
@@ -2075,12 +2079,20 @@ html {
   height: 2.5rem;
 }
 
+.h-4 {
+  height: 1rem;
+}
+
 .w-10 {
   width: 2.5rem;
 }
 
 .w-52 {
   width: 13rem;
+}
+
+.w-4 {
+  width: 1rem;
 }
 
 .flex-1 {
@@ -2103,8 +2115,16 @@ html {
   justify-content: flex-end;
 }
 
+.justify-center {
+  justify-content: center;
+}
+
 .gap-2 {
   gap: 0.5rem;
+}
+
+.whitespace-nowrap {
+  white-space: nowrap;
 }
 
 .rounded-box {
