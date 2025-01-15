@@ -3,14 +3,6 @@
 {% block title %}{{ m("protests") }}{% endblock %}
 
 {% block content %}
-    <a href="/protests/add">
-        <button type="button">{{ m("add_protest") }}</button>
-    </a>
-
-    {% if user_id.is_some() %}
-    <h1>User is: {{ user_id.unwrap() }}</h1>
-    {% endif %}
-
     <form method="get" action="/protests">
         <label for="town">{{ m("town") }}:</label>
         <input type="text" id="town" name="town"><br>
@@ -31,7 +23,7 @@
         <button type="submit">{{ m("search") }}</button>
     </form>
 
-    <section class="box-border bg-green-400">
+    <section class="box-border">
         {% for protest in protests %}
         <aside>
             {% if protest.image_name.is_some() %}

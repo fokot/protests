@@ -43,6 +43,7 @@ struct ProtestViewTemplate {
     protest: Protest,
     lang: String,
     m: LocalizationFn,
+    user_id: Option<i32>,
 }
 
 pub async fn view_protest(
@@ -52,11 +53,11 @@ pub async fn view_protest(
 ) -> impl IntoResponse {
     // Fetch the protest from the database
     let protest = repository::get_protest(&state.db, protest_id).await;
-
+    let user_id = extract_user(&cookies);
     match protest {
         Ok(protest) => {
             let (lang, m) = extract_language(&cookies);
-            let template = ProtestViewTemplate { protest, lang, m };
+            let template = ProtestViewTemplate { protest, lang, m, user_id };
             Html(template.render().unwrap()).into_response()
         }
         Err(err) => (
@@ -72,11 +73,13 @@ pub async fn view_protest(
 struct ProtestAddTemplate {
     lang: String,
     m: LocalizationFn,
+    user_id: Option<i32>,
 }
 
 pub async fn add_protest_form(cookies: SignedCookieJar) -> impl IntoResponse {
     let (lang, m) = extract_language(&cookies);
-    let template = ProtestAddTemplate { lang, m } ;
+    let user_id = extract_user(&cookies);
+    let template = ProtestAddTemplate { lang, m, user_id } ;
     Html(template.render().unwrap()).into_response()
 }
 
@@ -105,6 +108,7 @@ struct ProtestEditTemplate {
     protest: Protest,
     lang: String,
     m: LocalizationFn,
+    user_id: Option<i32>,
 }
 
 pub async fn edit_protest_form(
@@ -114,11 +118,12 @@ pub async fn edit_protest_form(
 ) -> impl IntoResponse {
     // Fetch the protest from the database
     let protest = repository::get_protest(&state.db, protest_id).await;
+    let user_id = extract_user(&cookies);
 
     match protest {
         Ok(protest) => {
             let (lang, m) = extract_language(&cookies);
-            let template = ProtestEditTemplate { protest, lang, m };
+            let template = ProtestEditTemplate { protest, lang, m, user_id };
             Html(template.render().unwrap()).into_response()
         }
         Err(_) => (

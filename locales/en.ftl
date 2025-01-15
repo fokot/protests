@@ -26,3 +26,6 @@ delete = Delete
 email = Email
 login = Login
 edit = Edit
+settings = Settings
+logout = Logout
+notifications = Notifications

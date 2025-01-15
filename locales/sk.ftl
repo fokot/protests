@@ -26,3 +26,6 @@ delete = Zmaž
 email = Email
 login = Prihlásiť sa
 edit = Upraviť
+settings = Nastavenia
+logout = Odhlásiť sa
+notifications = Notifikácie

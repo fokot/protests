@@ -22,3 +22,84 @@
     </svg>
 </label>
 {% endmacro theme_selector %}
+
+{% macro login() %}
+<div class="dropdown dropdown-end">
+    <div tabindex="0" role="button" class="btn m-1">{{m("login")}}</div>
+    <div tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+        <label class="input input-bordered flex items-center gap-2">
+            {{m("email")}}
+            <input id="login-email" type="email" class="grow" />
+        </label>
+        <button id="login-button" class="btn btn-primary">{{m("login")}}</button>
+        <script>
+            document.getElementById('login-button').addEventListener('click', async (event) => {
+                event.preventDefault();
+                const data = new URLSearchParams();
+                data.append('email', document.getElementById('login-email').value);
+                const response = await fetch('/login/generate-code', {
+                    method: 'POST',
+                    body: data,
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    }
+                });
+
+                const protocol = window.location.protocol;
+                const host = window.location.hostname;
+                const port = window.location.port;
+                const path = await response.text();
+
+                const link = `${protocol}//${host}${port ? `:${port}` : ''}${path}`;
+                document.getElementById('login-email').style.display = 'none';
+                document.getElementById('login-button').style.display = 'none';
+                const loginLink = document.getElementById('login-link');
+                loginLink.innerHTML = `Login with link: <a href="${link}">${link}</a>`;
+                loginLink.style.display = 'block';
+            });
+        </script>
+        <div id="login-link" style="display: none;"></div>
+    </div>
+</div>
+{% endmacro login %}
+
+{% macro settings() %}
+<div class="dropdown dropdown-end">
+    <div tabindex="0" role="button" class="btn m-1">
+        <svg
+                class="swap-off fill-current"
+                xmlns="http://www.w3.org/2000/svg"
+                width="32"
+                height="32"
+                viewBox="0 0 512 512">
+            <path d="M64,384H448V341.33H64Zm0-106.67H448V234.67H64ZM64,128v42.67H448V128Z" />
+        </svg>
+    </div>
+    <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+        <li><a class="btn btn-ghost rounded-btn" href="/protests/add">{{m("add_protest")}}</a></li>
+        <li><a class="btn btn-ghost rounded-btn" href="/protests/settings">{{m("settings")}}</a></li>
+        <li class="btn btn-ghost rounded-btn" onclick="document.cookie = 'user_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'; window.location.href='/';" >{{m("logout")}}</li>
+    </ul>
+</div>
+{% endmacro settings %}
+
+{% macro home() %}
+<div class="flex items-center btn m-1">
+    <a href="/">
+        <svg
+             xmlns="http://www.w3.org/2000/svg"
+                width="32"
+                height="32"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+            <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+    </a>
+</div>
+{% endmacro home %}
+
