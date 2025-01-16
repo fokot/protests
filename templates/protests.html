@@ -3,24 +3,21 @@
 {% block title %}{{ m("protests") }}{% endblock %}
 
 {% block content %}
-    <form method="get" action="/protests">
-        <label for="town">{{ m("town") }}:</label>
-        <input type="text" id="town" name="town"><br>
+    <form method="get" action="/protests" class="container">
 
-        <label for="date_from">{{ m("date_from") }}:</label>
-        <input type="date" id="date_from" name="date_from"><br>
+        <input type="text" name="town" placeholder='{{m("town")}}' class="input input-bordered w-full max-w-xs" />
 
-        <label for="tags">{{ m("tags") }}:</label>
-        <select id="tags" name="tags" multiple>
-            {% for tag in tags %}
-            <option value="{{ tag }}">{{ tag }}</option>
-            {% endfor %}
-        </select><br>
+        <input type="date" name="date_from" placeholder='{{m("date_from")}}' class="input input-bordered w-full max-w-xs" />
 
-        <label for="created_by">{{ m("created_by") }}:</label>
-        <input type="text" id="created_by" name="created_by"><br>
+        <select name="tags" class="select select-bordered w-full max-w-xs">
+            <option disabled selected>{{m("tags")}}</option>
+            <option>Han Solo</option>
+            <option>Greedo</option>
+        </select>
 
-        <button type="submit">{{ m("search") }}</button>
+        <input type="text" name="created_by" placeholder='{{m("created_by")}}' class="input input-bordered w-full max-w-xs" />
+
+        <button type="submit" class="btn btn-primary">{{m("search")}}</button>
     </form>
 
     <section class="box-border">
