@@ -29,3 +29,4 @@ edit = Upraviť
 settings = Nastavenia
 logout = Odhlásiť sa
 notifications = Notifikácie
+parent_region = Kraj

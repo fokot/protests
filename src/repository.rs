@@ -1,5 +1,5 @@
 use sqlx::{Error, PgPool};
-use crate::model::{Protest, ProtestSave, ProtestSearch};
+use crate::model::{Protest, ProtestSave, ProtestSearch, Region};
 
 
 pub async fn list_protests(db: &PgPool, search: ProtestSearch) -> Result<Vec<Protest>, Error> {
@@ -7,7 +7,7 @@ pub async fn list_protests(db: &PgPool, search: ProtestSearch) -> Result<Vec<Pro
     let mut where_clauses = vec!["p.deleted IS NULL".to_string()];
 
     if let Some(town) = &search.town {
-        where_clauses.push(format!("(r.name = '{}' OR r2.name = '{}')", town, town));
+        where_clauses.push(format!("(r.id = '{}' OR r2.id = '{}')", town, town));
     }
 
     if let Some(date_from) = &search.date_from {
@@ -231,4 +231,8 @@ pub async fn save_image(db: &PgPool, image_name: &str, user_id: i32) -> Result<i
         .bind(image_name)
         .bind(user_id)
         .fetch_one(db).await
+}
+
+pub async fn list_regions(db: &PgPool) -> Result<Vec<Region>, Error> {
+    sqlx::query_as("SELECT id, name, parent_id FROM region").fetch_all(db).await
 }

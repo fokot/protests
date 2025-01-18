@@ -4,8 +4,19 @@
 
 {% block content %}
     <form method="get" action="/protests" class="container">
-
-        <input type="text" name="town" placeholder='{{m("town")}}' class="input input-bordered w-full max-w-xs" />
+        <select id="s1" class="select select-bordered w-full max-w-xs" name="town">
+            <option value="" disabled selected>{{m("town")}}</option>
+            {% for region in regions.0 %}
+            <option value="{{ region.id }}">{{ region.name }}</option>
+            {% endfor %}
+            {% for region_group in regions.1 %}
+            <optgroup label="{{ region_group.0 }}">
+                {% for region in region_group.1 %}
+                <option value="{{ region.id }}">{{ region.name }}</option>
+                {% endfor %}
+            </optgroup>
+            {% endfor %}
+        </select>
 
         <input type="date" name="date_from" placeholder='{{m("date_from")}}' class="input input-bordered w-full max-w-xs" />
 
@@ -20,33 +31,38 @@
         <button type="submit" class="btn btn-primary">{{m("search")}}</button>
     </form>
 
-    <section class="box-border">
+    <div class="flex flex-wrap gap-4">
         {% for protest in protests %}
-        <aside>
-            {% if protest.image_name.is_some() %}
-            <img src="/images/{{ protest.image_name.clone().unwrap() }}" alt="{{ protest.title }}" style="width: 100px;">
-            {% endif %}
-            <h2>
-                <a href="/protests/{{ protest.id }}">{{ protest.title }}</a>
-            </h2>
-            <!-- Fix and use is_some_and(..) -->
-            {% if user_id.unwrap_or_default() == protest.user_id %}
-            <a href="/protests/{{ protest.id }}/edit">
-                <button type="button">{{ m("edit") }}</button>
-            </a>
-            {% endif %}
-            <p>{{ protest.description }}</p>
-            <ul>
-                {% for tag in protest.tags %}
-                <li>{{ tag }}</li>
-                {% endfor %}
-            </ul>
-            <div>
-                {{m("date")}}:<strong> {{ protest.date }}</strong><br>
-                {{m("time")}}:<strong>{{ protest.time }}</strong><br>
-                {{m("location")}}:<strong>{{ protest.town.clone().unwrap_or("".to_string()) }}, {{ protest.region.clone().unwrap_or("".to_string()) }}, {{ protest.location }}</strong>
+        <a href="/protests/{{ protest.id }}">
+            <div class="card bg-base-100 w-96 shadow-xl">
+                {% if protest.image_name.is_some() %}
+                <figure>
+                    <img src="/images/{{ protest.image_name.clone().unwrap() }}" alt="{{ protest.title }}">
+                </figure>
+                {% endif %}
+                <div class="card-body">
+                    <h2 class="card-title">{{ protest.title }}</h2>
+                    <p>{{ protest.description }}</p>
+                    <ul>
+                        {% for tag in protest.tags %}
+                        <li>{{ tag }}</li>
+                        {% endfor %}
+                    </ul>
+                    <div>
+                        {{m("date")}}:<strong> {{ protest.date }}</strong><br>
+                        {{m("time")}}:<strong>{{ protest.time }}</strong><br>
+                        {{m("location")}}:<strong>{{ protest.town.clone().unwrap_or("".to_string()) }}, {{ protest.region.clone().unwrap_or("".to_string()) }}, {{ protest.location }}</strong>
+                    </div>
+                    <div class="card-actions justify-end">
+                        {% if user_id.unwrap_or_default() == protest.user_id %}
+                        <a href="/protests/{{ protest.id }}/edit">
+                            <button class="btn btn-primary">{{ m("edit") }}</button>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
-        </aside>
+        </a>
         {% endfor %}
-    </section>
+    </div>
 {% endblock %}

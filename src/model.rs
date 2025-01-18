@@ -61,7 +61,7 @@ pub struct ProtestSave {
 pub struct ProtestSearch {
     #[serde_as(as = "NoneAsEmptyString")]
     #[serde(default)]
-    pub town: Option<String>,
+    pub town: Option<i32>,
     #[serde_as(as = "NoneAsEmptyString")]
     #[serde(default)]
     pub date_from: Option<String>,
@@ -74,6 +74,13 @@ pub struct ProtestSearch {
 #[derive(Deserialize)]
 pub struct LoginForm {
     pub email: String,
+}
+
+#[derive(Clone, Debug, Deserialize, FromRow)]
+pub struct Region {
+    pub id: i32,
+    pub name: String,
+    pub parent_id: Option<i32>,
 }
 
 

@@ -29,3 +29,4 @@ edit = Edit
 settings = Settings
 logout = Logout
 notifications = Notifications
+parent_region = State
